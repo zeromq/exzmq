@@ -5,6 +5,8 @@ defmodule Exzmp.Mixfile do
     [ app: :exzmq,
       version: "0.0.1",
       elixir: "~> 0.12.5",
+      name: "Exzmp",
+      source_url: "https://github.com/plemanach/exzmq",
       deps: deps ]
   end
 
@@ -23,7 +25,7 @@ defmodule Exzmp.Mixfile do
   # { :barbat, "~> 0.1", github: "elixir-lang/barbat" }
   defp deps do
     [
-      {:gen_listener_tcp, github: "travelping/gen_listener_tcp"}
+      {:gen_listener_tcp, github: "kaos/gen_listener_tcp"}
     ]
   end
 end

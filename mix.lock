@@ -1,2 +1,1 @@
-[ "ex_doc": {:git, "git://github.com/elixir-lang/ex_doc.git", "c14203bfca186f68ff178e5ada9af4f5fb37e205", []},
-  "gen_listener_tcp": {:git, "git://github.com/travelping/gen_listener_tcp.git", "76e4ad0b76e4a9ced84ff995a1be402b476fc9c0", []} ]
+[ "gen_listener_tcp": {:git, "git://github.com/kaos/gen_listener_tcp.git", "52be852254bf751e6d339e664d1c4ad7d3936edf", []} ]

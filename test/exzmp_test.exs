@@ -3,10 +3,6 @@
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 defmodule ExzmqTest do
   use ExUnit.Case, async: false
-
-  test "the truth" do
-    assert(true)
-  end
   
   test "open a req socket, bind and close" do
     {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])

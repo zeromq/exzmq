@@ -45,34 +45,32 @@ defmodule Exzmq.Examples.HWserver do
     loop(socket)
   end
   
-  def loop(socket) do
+  defp loop(socket) do
     Exzmq.recv(socket)
     :io.format("Received Hello~n")
     Exzmq.send(socket, [<<"World">>])
     loop(socket)
   end
-
 end
+
 
 defmodule Exzmq.Examples.HWclient do
 
   def main() do
-  
     {:ok, socket} = Exzmq.start([{:type, :req}])
     Exzmq.connect(socket, :tcp, {127,0,0,1}, 5555, [])
     loop(socket, 0)
   end
 
-  def loop(_socket, 10), do: :ok
+  defp loop(_socket, 10), do: :ok
 
-  def loop(socket, n) do
+  defp loop(socket, n) do
 	 :io.format("Sending Hello ~w ...~n",[n])
 	 Exzmq.send(socket, [<<"Hello",0>>])
 	 {:ok, r} = Exzmq.recv(socket)
      :io.format("Received '~s' ~w~n", [r, n])
 	 loop(socket, n+1)
   end
-
 end	
 ```
 

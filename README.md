@@ -1,13 +1,15 @@
-exzmq - Ã˜MQ in pure Elixir
+exzmq - ØMQ in pure Elixir
 ============================
 
 
-exzmq implements the Ã˜MQ protocol in 100% pure Elixir.
+exzmq implements the ØMQ protocol in 100% pure Elixir.
+
+Base on the original work from ezmq(https://github.com/zeromq/ezmq)
 
 Motivation
 ----------
 
-Ã˜MQ is like Erlang message passing for the rest of the world without the
+ØMQ is like Erlang message passing for the rest of the world without the
 overhead of a C-Node. So using it to talk to rest of the World seems like
 a good idea. Several Erlang wrappers for the C++ reference implemention do
 exist. So why reinvent the wheel in Elixir?
@@ -23,7 +25,7 @@ to be implemented in Elixir itself.
 Main features
 -------------
 
-* Ã˜MQ compatible
+* ØMQ compatible
 * 100% Elixir
 * good fault isolation (a crash in the message decoder won't take down
   your Erlang VM)

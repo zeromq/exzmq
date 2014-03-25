@@ -189,8 +189,6 @@ defmodule ExzmqTest do
     Enum.each(s2, fn(s) -> :ok = Exzmq.send(s, [msg]) end)
     Enum.each(s2, fn(_s) ->
                           {:ok, {id, [msg]}} = Exzmq.recv(s1)
-                           IO.puts "recv message id:"
-                           IO.inspect id
                           :ok = Exzmq.send(s1, {id, [msg]})
                   end)
     Enum.each(s2, fn(s) -> {:ok, msg} = Exzmq.recv(s) end)

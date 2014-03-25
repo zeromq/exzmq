@@ -67,7 +67,7 @@ defmodule Exzmq.Socket.Pub do
 	  {:next_state, :idle, mqsstate, state}
 	end
 
-	def idle(:do, {:deliver_send, transport}, mqsstate, state) do
+	def idle(:do, {:deliver_send, _transport}, mqsstate, state) do
 	  {:next_state, :idle, mqsstate, state}
 	end
 

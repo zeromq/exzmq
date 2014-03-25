@@ -32,10 +32,6 @@ Main features
 * API very similar to other socket interfaces
 * runs on non SMP and SMP VM
 
-Contribution process
---------------------
-
-* ZeroMQ [RFC 22 C4.1](http://rfc.zeromq.org/spec:22)
 
 Examples
 --------
@@ -44,11 +40,8 @@ Examples
 defmodule Exzmq.Examples.HWserver do
 
   def main() do
-   
-    port = 5555
-	
     {:ok, socket} = Exzmq.start([{:type, :rep}])
-    Exzmq.bind(socket, :tcp, port, [])
+    Exzmq.bind(socket, :tcp, 5555, [])
     loop(socket)
   end
   
@@ -75,19 +68,18 @@ defmodule Exzmq.Examples.HWclient do
   def loop(socket, n) do
 	 :io.format("Sending Hello ~w ...~n",[n])
 	 Exzmq.send(socket, [<<"Hello",0>>])
-	 {status, r} = Exzmq.recv(socket)
-
-    if status == :ok do
-	    :io.format("Received '~s' ~w~n", [r, n])
-	    loop(socket, n+1)
-    else
-      IO.puts "error #{r}"
-    end
-
+	 {:ok, r} = Exzmq.recv(socket)
+     :io.format("Received '~s' ~w~n", [r, n])
+	 loop(socket, n+1)
   end
 
 end	
 ```
+
+Contribution process
+--------------------
+
+* ZeroMQ [RFC 22 C4.1](http://rfc.zeromq.org/spec:22)
 
 TODO:
 -----

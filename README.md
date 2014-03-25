@@ -37,6 +37,58 @@ Contribution process
 
 * ZeroMQ [RFC 22 C4.1](http://rfc.zeromq.org/spec:22)
 
+Examples
+--------
+
+```elixir
+defmodule Exzmq.Examples.HWserver do
+
+  def main() do
+   
+    port = 5555
+	
+    {:ok, socket} = Exzmq.start([{:type, :rep}])
+    Exzmq.bind(socket, :tcp, port, [])
+    loop(socket)
+  end
+  
+  def loop(socket) do
+    Exzmq.recv(socket)
+    :io.format("Received Hello~n")
+    Exzmq.send(socket, [<<"World">>])
+    loop(socket)
+  end
+
+end
+
+defmodule Exzmq.Examples.HWclient do
+
+  def main() do
+  
+    {:ok, socket} = Exzmq.start([{:type, :req}])
+    Exzmq.connect(socket, :tcp, {127,0,0,1}, 5555, [])
+    loop(socket, 0)
+  end
+
+  def loop(_socket, 10), do: :ok
+
+  def loop(socket, n) do
+	 :io.format("Sending Hello ~w ...~n",[n])
+	 Exzmq.send(socket, [<<"Hello",0>>])
+	 {status, r} = Exzmq.recv(socket)
+
+    if status == :ok do
+	    :io.format("Received '~s' ~w~n", [r, n])
+	    loop(socket, n+1)
+    else
+      IO.puts "error #{r}"
+    end
+
+  end
+
+end	
+```
+
 TODO:
 -----
 

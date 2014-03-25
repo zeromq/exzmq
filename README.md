@@ -12,7 +12,7 @@ overhead of a C-Node. So using it to talk to rest of the World seems like
 a good idea. Several Erlang wrappers for the C++ reference implemention do
 exist. So why reinvent the wheel in Elixir?
 
-Elixir is the way forward for the beam community, it feel like the good time of to have
+Elixir is the way forward for the beam community, it feel like the good time to have
 an implementation of zeromq.
 
 Secondly, when using the C++ implementation we

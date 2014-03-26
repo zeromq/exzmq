@@ -3,7 +3,7 @@ defmodule Exzmp.Mixfile do
 
   def project do
     [ app: :exzmq,
-      version: "0.0.1",
+      version: "0.1.0",
       elixir: "~> 0.12.5",
       name: "Exzmp",
       source_url: "https://github.com/plemanach/exzmq",

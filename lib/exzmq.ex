@@ -739,9 +739,8 @@ defmodule Exzmq do
     end
 
     def simple_decap_msg(msg) when is_list(msg) do
-        :lists.reverse(:lists.foldl(fn({:normal, m}, acc) -> 
-                                            [m|acc]
-                                            (_, acc) -> acc 
+        :lists.reverse(:lists.foldl(fn({:normal, m}, acc) -> [m|acc]
+                                                 (_, acc) -> acc 
                                     end, [], msg))
     end
                            

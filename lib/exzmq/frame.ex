@@ -87,11 +87,7 @@ defmodule Exzmq.Frame do
    encode(head, @flag_label, rest, acc)
   end
 
-  def encode([{:normal, head}|rest],acc) do
-    encode(head, @flag_none, rest, acc)
-  end
-
-  def encode([head|rest], acc) when is_binary(head) or is_list(head) do
+  def encode([{:normal, head}|rest],acc)  when is_binary(head) or is_list(head) do
     encode(head, @flag_none, rest, acc)
   end
 

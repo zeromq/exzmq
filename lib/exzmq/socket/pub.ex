@@ -60,9 +60,7 @@ defmodule Exzmq.Socket.Pub do
 	def idle(:check, _, _mqsstate, _state) do
 	  {:error, :fsm}
 	end
-
 	
-
 	def idle(:do, :queue_send, mqsstate, state) do
 	  {:next_state, :idle, mqsstate, state}
 	end

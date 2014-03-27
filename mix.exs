@@ -23,7 +23,7 @@ defmodule Exzmp.Mixfile do
   #
   # To specify particular versions, regardless of the tag, do:
   # { :barbat, "~> 0.1", github: "elixir-lang/barbat" }
-  if System.get_env("ZMQ3_TEST_SUITE") == "true" do
+  if System.get_env("ZMQ_TEST_SUITE") == "true" do
     defp deps do
       [
         {:gen_listener_tcp, github: "kaos/gen_listener_tcp"},

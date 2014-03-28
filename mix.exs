@@ -27,7 +27,7 @@ defmodule Exzmp.Mixfile do
     defp deps do
       [
         {:gen_listener_tcp, github: "kaos/gen_listener_tcp"},
-        {:erlzmq, github: "zeromq/erlzmq2"}
+        {:erlzmq, github: "zeromq/erlzmq2", tag: "2.1.11"}
       ]
     end
   else

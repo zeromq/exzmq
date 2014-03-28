@@ -27,10 +27,10 @@ defmodule Exzmq.ZMQ3Test do
     
     {:ok, s1} = :erlzmq.socket(ctx, [type1, {:active, active}])
     {:ok, s2} = Exzmq.socket([{:type, type2}, {:active, active}, {:identity,id2}])
-    :ok = erlzmq_identity(S1, Id1)
+    :ok = erlzmq_identity(s1, id1)
     :ok = :erlzmq.bind(s1, transport)
     :ok = Exzmq.connect(s2, :tcp, ip, port, [])
-    {S1, S2}
+    {s1, s2}
   end
   
   def erlzmq_identity(socket, []) do

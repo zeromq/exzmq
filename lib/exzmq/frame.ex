@@ -16,24 +16,23 @@ defmodule Exzmq.Frame do
   def frame_type(_,_), do: :normal
 
   def decode_greeting(data = <<0xff, length::[size(64), unsigned, integer], 
-                                     _::size(7), idflags::size(1), rest::binary>>) do
+                                     idflags::size(8), rest::binary>>) do
     decode_greeting({1,0}, length, idflags, rest, data)
   end
 
-  def decode_greeting(data = <<length::[size(8), integer],_::size(7), 
-                               idflags::[size(1), integer], rest::binary>>) do
+  def decode_greeting(data = <<length::[size(8), integer], 
+                               idflags::size(8), rest::binary>>) do
     decode_greeting({1,0}, length, idflags, rest, data)
   end
 
   def decode_greeting(data), do: {:more, data}
 
-  def decode_greeting({1,0}, frame_len, 0, msg, data) when size(msg) < frame_len - 1 do
+  def decode_greeting({1,0}, frame_len, _idflags, msg, data) when size(msg) < frame_len - 1 do
     {:more, data}
   end
 
-  def decode_greeting(ver = {1,0}, frame_len, 0, msg, _data) do
+  def decode_greeting(ver = {1,0}, frame_len, _idflags, msg, _data) do
     idlen = frame_len - 1
-
     <<identity::[size(idlen), bytes], rem::binary>> = msg
     {{:greeting, ver, nil, identity}, rem}
   end

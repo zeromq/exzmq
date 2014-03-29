@@ -42,8 +42,8 @@ defmodule Exzmq.ZMQ3Test do
   end
 
   test "reqrep_tcp_id_test_active" do
-    basic_tests_erlzmq(&ping_pong_erlzmq/3, "tcp://127.0.0.1:5555", {127,0,0,1}, 5555, :req, "reqrep_tcp_id_test_active_req", :rep, "reqrep_tcp_id_test_active_rep", :active, 3)
-    #basic_tests_ezmq(&ping_pong_ezmq/3, "tcp://127.0.0.1:5555", {127,0,0,1}, 5555, :req, "reqrep_tcp_id_test_active_req", :rep, "reqrep_tcp_id_test_active_rep", :active, 3)
+    basic_tests_erlzmq(&ping_pong_erlzmq/3, 'tcp://127.0.0.1:5555', {127,0,0,1}, 5555, :req, "reqrep_tcp_id_test_active_req", :rep, "reqrep_tcp_id_test_active_rep", :active, 3)
+    basic_tests_ezmq(&ping_pong_ezmq/3, 'tcp://127.0.0.1:5555', {127,0,0,1}, 5555, :req, "reqrep_tcp_id_test_active_req", :rep, "reqrep_tcp_id_test_active_rep", :active, 3)
   end
 
   def ping_pong_erlzmq({s1, s2}, msg, :active) do
@@ -52,7 +52,7 @@ defmodule Exzmq.ZMQ3Test do
     assert_mbox({:zmq, s2, [msg,msg]})
     assert_mbox_empty()
 
-    :ok = :ezmq.send(s2, [msg])
+    :ok = Exzmq.send(s2, [msg])
     assert_mbox({:zmq, s1, msg, []})
 
     :ok = :erlzmq.send(s1, msg)

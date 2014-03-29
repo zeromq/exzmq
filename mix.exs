@@ -14,7 +14,7 @@ defmodule Exzmp.Mixfile do
   def application do
     [
       mod: { Exzmq.App, [] },
-      applications: [:sasl, :gen_listener_tcp]
+      applications: [:sasl, :gen_listener_tcp, :erlzmq]
     ]
   end
 

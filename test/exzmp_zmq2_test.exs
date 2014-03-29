@@ -25,7 +25,7 @@ defmodule Exzmq.ZMQ3Test do
     {:ok, c} = :erlzmq.context(1)
     {s1, s2} = create_bound_pair_ezmq(c, type1, id1, type2, id2, mode, transport, ip, port)
     msg = String.duplicate("X", size)
-    fun({s1, s2}, msg, mode)
+    fun.({s1, s2}, msg, mode)
     :ok = Exzmq.close(s1)
     :ok = :erlzmq.close(s2)
     :ok = :erlzmq.term(c)
@@ -211,7 +211,7 @@ defmodule Exzmq.ZMQ3Test do
 
     :ok = :erlzmq.send(s2, msg, [:sndmore])
     :ok = :erlzmq.send(s2, msg)
-    assert_mbox({zmq, s1, [msg,msg]})
+    assert_mbox({:zmq, s1, [msg,msg]})
     assert_mbox_empty()
 
     :ok
@@ -242,7 +242,7 @@ defmodule Exzmq.ZMQ3Test do
     assert_mbox_empty()
 
     :ok = Exzmq.send(s2, [msg])
-    assert_mbox({zmq, s1, msg, []})
+    assert_mbox({:zmq, s1, msg, []})
     assert_mbox_empty()
 
     :ok
@@ -289,7 +289,7 @@ defmodule Exzmq.ZMQ3Test do
     :ok = Exzmq.send(s1, [msg])
     {:ok, <<>>} = :erlzmq.recv(s2)
     {:ok, msg} = :erlzmq.recv(s2)
-    :ok = :erlzmq.send(s2, <<>>, [sndmore])
+    :ok = :erlzmq.send(s2, <<>>, [:sndmore])
     :ok = :erlzmq.send(s2, msg)
     {:ok, [msg]} = Exzmq.recv(s1)
     :ok = Exzmq.send(s1, [msg,msg])
@@ -304,22 +304,22 @@ defmodule Exzmq.ZMQ3Test do
     :ok = :erlzmq.send(s1, msg, [:sndmore])
     :ok = :erlzmq.send(s1, msg)
 
-    assert_mbox({zmq, s2, [msg,msg]})
+    assert_mbox({:zmq, s2, [msg,msg]})
     assert_mbox_empty()
 
     :ok = Exzmq.send(s2, [msg])
-    assert_mbox({zmq, s1, <<>>, [:rcvmore]})
-    assert_mbox({zmq, s1, msg, []})
+    assert_mbox({:zmq, s1, <<>>, [:rcvmore]})
+    assert_mbox({:zmq, s1, msg, []})
     assert_mbox_empty()
 
     :ok = :erlzmq.send(s1, <<>>, [:sndmore])
     :ok = :erlzmq.send(s1, msg)
-    assert_mbox({zmq, s2, [msg]})
+    assert_mbox({:zmq, s2, [msg]})
     assert_mbox_empty()
 
     :ok = Exzmq.send(s2, [msg])
-    assert_mbox({zmq, s1, <<>>, [:rcvmore]})
-    assert_mbox({zmq, s1, msg, []})
+    assert_mbox({:zmq, s1, <<>>, [:rcvmore]})
+    assert_mbox({:zmq, s1, msg, []})
     assert_mbox_empty()
 
     :ok
@@ -332,21 +332,22 @@ defmodule Exzmq.ZMQ3Test do
     :ok = Exzmq.send(s2, [msg])
     {:ok, <<>>} = :erlzmq.recv(s1)
     {:ok, msg} = :erlzmq.recv(s1)
-    :ok = :erlzmq.send(s1, <<>>, [sndmore])
-    :ok = :erlzmq.send(s1, msg, [sndmore])
+    :ok = :erlzmq.send(s1, <<>>, [:sndmore])
+    :ok = :erlzmq.send(s1, msg, [:sndmore])
     :ok = :erlzmq.send(s1, msg)
     {:ok, [msg,msg]} = Exzmq.recv(s2)
     :ok
   end
 
   def dealer_recv_loop() do
-    receive
+    receive do
         m ->
             #ct:pal("got: ~w~n", [M]),
             dealer_recv_loop()
     after
         1000 ->
-            ct:fail(timeout)
+            #ct:fail(timeout)
+            assert false
     end
   end
 
@@ -390,15 +391,15 @@ defmodule Exzmq.ZMQ3Test do
     assert_mbox_empty()
 
     :ok = Exzmq.send(s2, {id, [msg]})
-    assert_mbox({zmq, s1, msg, []})
+    assert_mbox({:zmq, s1, msg, []})
     assert_mbox_empty()
 
     :ok = :erlzmq.send(s1, msg)
-    assert_mbox({zmq, s2, {id, [msg]}})
+    assert_mbox({:zmq, s2, {id, [msg]}})
     assert_mbox_empty()
 
     :ok = Exzmq.send(s2, {id, [msg]})
-    assert_mbox({zmq, s1, msg, []})
+    assert_mbox({:zmq, s1, msg, []})
     assert_mbox_empty()
 
     :ok
@@ -418,7 +419,7 @@ defmodule Exzmq.ZMQ3Test do
 
   def ping_pong_ezmq_router({s1, s2}, msg, :active) do
     :ok = Exzmq.send(s1, [msg,msg])
-    id = assert_mbox_match({{:zmq, s2, '$1', [:rcvmore]},[], ['$1']}),
+    id = assert_mbox_match({{:zmq, s2, '$1', [:rcvmore]},[], ['$1']})
     #ct:pal("erlzmq router ID: ~p~n", [id])
     assert_mbox({:zmq, s2, <<>>, [:rcvmore]})
     assert_mbox({:zmq, s2, msg, [:rcvmore]})
@@ -441,7 +442,7 @@ defmodule Exzmq.ZMQ3Test do
     :ok = :erlzmq.send(s2, <<>>, [:sndmore])
     :ok = :erlzmq.send(s2, msg, [:sndmore])
     :ok = :erlzmq.send(s2, msg)
-    assert_mbox({zmq, s1, [msg,msg]})
+    assert_mbox({:zmq, s1, [msg,msg]})
     assert_mbox_empty()
 
     :ok
@@ -493,5 +494,4 @@ defmodule Exzmq.ZMQ3Test do
   end
 
   end
-
 end

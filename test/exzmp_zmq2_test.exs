@@ -65,7 +65,7 @@ defmodule Exzmq.ZMQ3Test do
     :ok = :erlzmq.connect(s2, transport)
     {s1, s2}
   end
-  
+
   def erlzmq_identity(socket, []) do
     :ok
   end
@@ -336,6 +336,132 @@ defmodule Exzmq.ZMQ3Test do
     :ok = :erlzmq.send(s1, msg, [sndmore])
     :ok = :erlzmq.send(s1, msg)
     {:ok, [msg,msg]} = Exzmq.recv(s2)
+    :ok
+  end
+
+  def dealer_recv_loop() do
+    receive
+        m ->
+            #ct:pal("got: ~w~n", [M]),
+            dealer_recv_loop()
+    after
+        1000 ->
+            ct:fail(timeout)
+    end
+  end
+
+  def dealer_ping_pong_ezmq({s1, s2}, msg, :active) do
+    :ok = Exzmq.send(s1, [msg,msg])
+    assert_mbox({:zmq, s2, msg, [:rcvmore]})
+    assert_mbox({:zmq, s2, msg, []})
+    assert_mbox_empty()
+  
+    :ok = :erlzmq.send(s2, msg)
+    assert_mbox({:zmq, s1, [msg]})
+    assert_mbox_empty()
+
+    :ok = Exzmq.send(s1, [msg])
+    assert_mbox({:zmq, s2, msg, []})
+    assert_mbox_empty()
+
+    :ok = :erlzmq.send(s2, msg)
+    assert_mbox({:zmq, s1, [msg]})
+    :ok
+  end
+    
+  def dealer_ping_pong_ezmq({s1, s2}, msg, :passive) do
+    :ok = Exzmq.send(s1, [msg])
+    {:ok, msg} = :erlzmq.recv(s2)
+    :ok = :erlzmq.send(s2, msg)
+    {:ok, [msg]} = Exzmq.recv(s1)
+    :ok = Exzmq.send(s1, [msg,msg])
+    {:ok, msg} = :erlzmq.recv(s2)
+    {:ok, msg} = :erlzmq.recv(s2)
+    :ok
+  end
+
+  def ping_pong_erlzmq_router({s1, s2}, msg, :active) do
+    :ok = :erlzmq.send(s1, msg, [:sndmore])
+    :ok = :erlzmq.send(s1, msg)
+    ## {zmq, s2, {Id,[msg,msg]}} =
+    id = assert_mbox_match({{:zmq, s2, {'$1',[msg,msg]}},[], ['$1']})
+    #ct:pal("ezmq router ID: ~p~n", [Id]),
+    :io.format("Id: ~w~n", [Id])
+    assert_mbox_empty()
+
+    :ok = Exzmq.send(s2, {id, [msg]})
+    assert_mbox({zmq, s1, msg, []})
+    assert_mbox_empty()
+
+    :ok = :erlzmq.send(s1, msg)
+    assert_mbox({zmq, s2, {id, [msg]}})
+    assert_mbox_empty()
+
+    :ok = Exzmq.send(s2, {id, [msg]})
+    assert_mbox({zmq, s1, msg, []})
+    assert_mbox_empty()
+
+    :ok
+  end
+   
+  def ping_pong_erlzmq_router({s1, s2}, msg, :passive) do
+    :ok = :erlzmq.send(s1, msg)
+    {:ok, {id, [msg]}} = Exzmq.recv(s2)
+    #ct:pal("ezmq router ID: ~p~n", [id])
+    :ok = Exzmq.send(s2, {id, [msg]})
+    {:ok, msg} = :erlzmq.recv(s1)
+    :ok = :erlzmq.send(s1, msg, [:sndmore])
+    :ok = :erlzmq.send(s1, msg)
+    {:ok, {id, [msg,msg]}} = Exzmq.recv(s2)
+    :ok
+  end
+
+  def ping_pong_ezmq_router({s1, s2}, msg, :active) do
+    :ok = Exzmq.send(s1, [msg,msg])
+    id = assert_mbox_match({{:zmq, s2, '$1', [:rcvmore]},[], ['$1']}),
+    #ct:pal("erlzmq router ID: ~p~n", [id])
+    assert_mbox({:zmq, s2, <<>>, [:rcvmore]})
+    assert_mbox({:zmq, s2, msg, [:rcvmore]})
+    assert_mbox({:zmq, s2, msg, []})
+    assert_mbox_empty()
+  
+    :ok = :erlzmq.send(s2, id, [:sndmore])
+    :ok = :erlzmq.send(s2, <<>>, [:sndmore])
+    :ok = :erlzmq.send(s2, msg)
+    assert_mbox({:zmq, s1, [msg]})
+    assert_mbox_empty()
+
+    :ok = Exzmq.send(s1, [msg])
+    assert_mbox({:zmq, s2, Id, [:rcvmore]})
+    assert_mbox({:zmq, s2, <<>>, [:rcvmore]})
+    assert_mbox({:zmq, s2, msg, []})
+    assert_mbox_empty()
+
+    :ok = :erlzmq.send(s2, Id, [:sndmore])
+    :ok = :erlzmq.send(s2, <<>>, [:sndmore])
+    :ok = :erlzmq.send(s2, msg, [:sndmore])
+    :ok = :erlzmq.send(s2, msg)
+    assert_mbox({zmq, s1, [msg,msg]})
+    assert_mbox_empty()
+
+    :ok
+  end
+    
+  def ping_pong_ezmq_router({s1, s2}, msg, :passive) do
+    :ok = Exzmq.send(s1, [msg])
+    {:ok, id} = :erlzmq.recv(s2)
+    #ct:pal("erlzmq router ID: ~p~n", [Id]),
+    {:ok, <<>>} = :erlzmq.recv(s2)
+    {:ok, msg} = :erlzmq.recv(s2)
+    :ok = :erlzmq.send(s2, Id, [:sndmore])
+    :ok = :erlzmq.send(s2, <<>>, [:sndmore])
+    :ok = :erlzmq.send(s2, msg)
+    {:ok, [msg]} = Exzmq.recv(s1)
+    :ok = Exzmq.send(s1, [msg,msg])
+    {:ok, id} = :erlzmq.recv(s2)
+    {:ok, <<>>} = :erlzmq.recv(s2)
+    {:ok, msg} = :erlzmq.recv(s2)
+    {:ok, msg} = :erlzmq.recv(s2)
     :ok
   end
 

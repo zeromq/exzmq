@@ -46,6 +46,25 @@ defmodule Exzmq.ZMQ3Test do
     :ok = Exzmq.connect(s2, :tcp, ip, port, [])
     {s1, s2}
   end
+
+  def create_bound_pair_ezmq(ctx, type1, type2, mode, transport, ip, port) do
+    create_bound_pair_ezmq(ctx, type1, [], type2, [], mode, transport, ip, port)
+  end
+
+  def create_bound_pair_ezmq(ctx, type1, id1, type2, id2, mode, transport, ip, port) do
+    active = true
+
+    if mode == :passive do
+      active = false
+    end
+
+    {:ok, s1} = Exzmq.socket([{:type, type1}, {:active, active}, {:identity,id1}])
+    {:ok, s2} = :erlzmq.socket(ctx, [type1, {:active, active}])
+    :ok = erlzmq_identity(s2, id2)
+    :ok = Exzmq.bind(s1, :tcp, port, [])
+    :ok = :erlzmq.connect(s2, transport)
+    {s1, s2}
+  end
   
   def erlzmq_identity(socket, []) do
     :ok

@@ -18,7 +18,7 @@ defmodule Exzmq.ZMQ3Test do
   end
 
   def basic_tests_ezmq(fun, transport, ip, port, type1, type2, mode, size) do
-    basic_tests_ezmq(fun, transport, ip, Port, type1, [], type2, [], mode, size)
+    basic_tests_ezmq(fun, transport, ip, port, type1, [], type2, [], mode, size)
   end
 
   def basic_tests_ezmq(fun, transport, ip, port, type1, id1, type2, id2, mode, size) do
@@ -59,8 +59,9 @@ defmodule Exzmq.ZMQ3Test do
     end
 
     {:ok, s1} = Exzmq.socket([{:type, type1}, {:active, active}, {:identity,id1}])
-    {:ok, s2} = :erlzmq.socket(ctx, [type1, {:active, active}])
+    {:ok, s2} = :erlzmq.socket(ctx, [type2, {:active, active}])
     :ok = erlzmq_identity(s2, id2)
+
     :ok = Exzmq.bind(s1, :tcp, port, [])
     :ok = :erlzmq.connect(s2, transport)
     {s1, s2}
@@ -105,13 +106,13 @@ defmodule Exzmq.ZMQ3Test do
   end
  
   test "dealerrep_tcp_test_active" do
-    basic_tests_erlzmq(&ping_pong_erlzmq_dealer/3, 'tcp://127.0.0.1:5559', {127,0,0,1}, 5559, :dealer, :rep, :active, 4)
-    basic_tests_ezmq(&ping_pong_ezmq_dealer/3, 'tcp://127.0.0.1:5559', {127,0,0,1}, 5559, :dealer, :rep, :active, 4)
+    basic_tests_erlzmq(&dealer_ping_pong_erlzmq/3, 'tcp://127.0.0.1:5559', {127,0,0,1}, 5559, :dealer, :rep, :active, 4)
+    basic_tests_ezmq(&dealer_ping_pong_ezmq/3, 'tcp://127.0.0.1:5559', {127,0,0,1}, 5559, :dealer, :rep, :active, 4)
   end
 
   test "dealerrep_tcp_test_passive" do
-    basic_tests_erlzmq(&ping_pong_erlzmq_dealer/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5560, :dealer, :rep, :passive, 3)
-    basic_tests_ezmq(&ping_pong_ezmq_dealer/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5560, :dealer, :rep, :passive, 3)
+    basic_tests_erlzmq(&dealer_ping_pong_erlzmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5560, :dealer, :rep, :passive, 3)
+    basic_tests_ezmq(&dealer_ping_pong_ezmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5560, :dealer, :rep, :passive, 3)
   end
   
   test "reqdealer_tcp_id_test_active" do
@@ -125,13 +126,13 @@ defmodule Exzmq.ZMQ3Test do
   end
 
   test "reqrouter_tcp_test_active" do
-    basic_tests_erlzmq(&ping_pong_erlzmq_router/3, 'tcp://127.0.0.1:5561', {127,0,0,1}, 5561, :req, :router, :active, 3)
-    basic_tests_ezmq(&ping_pong_ezmq_router/3, 'tcp://127.0.0.1:5561', {127,0,0,1}, 5561, :req, :router, :active, 3)
+    basic_tests_erlzmq(&ping_pong_erlzmq_router/3, 'tcp://127.0.0.1:5571', {127,0,0,1}, 5571, :req, :router, :active, 3)
+    basic_tests_ezmq(&ping_pong_ezmq_router/3, 'tcp://127.0.0.1:5572', {127,0,0,1}, 5572, :req, :router, :active, 3)
   end
 
   test "reqrouter_tcp_test_passive" do
-    basic_tests_erlzmq(&ping_pong_erlzmq_router/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, :router, :passive, 3)
-    basic_tests_ezmq(&ping_pong_ezmq_router/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, :router, :passive, 3)
+    basic_tests_erlzmq(&ping_pong_erlzmq_router/3, 'tcp://127.0.0.1:5573', {127,0,0,1}, 5573, :req, :router, :passive, 3)
+    basic_tests_ezmq(&ping_pong_ezmq_router/3, 'tcp://127.0.0.1:5574', {127,0,0,1}, 5574, :req, :router, :passive, 3)
   end
 
   test "reqrouter_tcp_id_test_active" do
@@ -140,8 +141,8 @@ defmodule Exzmq.ZMQ3Test do
   end
 
   test "reqrouter_tcp_id_test_passive" do
-    basic_tests_erlzmq(&ping_pong_erlzmq_router/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, "reqrouter_tcp_test_active_req", :router, "reqrouter_tcp_test_active_router", :passive, 3)
-    basic_tests_ezmq(&ping_pong_ezmq_router/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, "reqrouter_tcp_test_active_req", :router, "reqrouter_tcp_test_active_router", :passive, 3)
+    basic_tests_erlzmq(&ping_pong_erlzmq_router/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, "reqrouter_tcp_test_passive_req", :router, "reqrouter_tcp_test_passive_router", :passive, 3)
+    basic_tests_ezmq(&ping_pong_ezmq_router/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, "reqrouter_tcp_test_passive_req", :router, "reqrouter_tcp_test_passive_router", :passive, 3)
   end
    
   def ping_pong_erlzmq({s1, s2}, msg, :active) do
@@ -217,7 +218,7 @@ defmodule Exzmq.ZMQ3Test do
     :ok
   end
       
-  def ping_pong_ezmq({s1, s2}, msg, passive) do
+  def ping_pong_ezmq({s1, s2}, msg, :passive) do
     :ok = Exzmq.send(s1, [msg])
     {:ok, msg} = :erlzmq.recv(s2)
     :ok = :erlzmq.send(s2, msg)
@@ -228,7 +229,7 @@ defmodule Exzmq.ZMQ3Test do
     :ok
   end
 
-  def ping_pong_erlzmq_dealer({s1, s2}, msg, active) do
+  def ping_pong_erlzmq_dealer({s1, s2}, msg, :active) do
     :ok = :erlzmq.send(s1, msg, [:sndmore])
     :ok = :erlzmq.send(s1, msg)
     assert_mbox({:zmq, s2, [msg,msg]})
@@ -299,7 +300,7 @@ defmodule Exzmq.ZMQ3Test do
     :ok
   end
 
-  def dealer_ping_pong_erlzmq({s1, s2}, msg, active) do
+  def dealer_ping_pong_erlzmq({s1, s2}, msg, :active) do
     :ok = :erlzmq.send(s1, <<>>, [:sndmore])
     :ok = :erlzmq.send(s1, msg, [:sndmore])
     :ok = :erlzmq.send(s1, msg)
@@ -385,7 +386,7 @@ defmodule Exzmq.ZMQ3Test do
     :ok = :erlzmq.send(s1, msg, [:sndmore])
     :ok = :erlzmq.send(s1, msg)
     ## {zmq, s2, {Id,[msg,msg]}} =
-    id = assert_mbox_match({{:zmq, s2, {'$1',[msg,msg]}},[], ['$1']})
+    id = assert_mbox_match({{:zmq, s2, {:'$1',[msg,msg]}},[], [:'$1']})
     #ct:pal("ezmq router ID: ~p~n", [Id]),
     :io.format("Id: ~w~n", [Id])
     assert_mbox_empty()
@@ -419,7 +420,7 @@ defmodule Exzmq.ZMQ3Test do
 
   def ping_pong_ezmq_router({s1, s2}, msg, :active) do
     :ok = Exzmq.send(s1, [msg,msg])
-    id = assert_mbox_match({{:zmq, s2, '$1', [:rcvmore]},[], ['$1']})
+    id = assert_mbox_match({{:zmq, s2, :'$1', [:rcvmore]},[], [:'$1']})
     #ct:pal("erlzmq router ID: ~p~n", [id])
     assert_mbox({:zmq, s2, <<>>, [:rcvmore]})
     assert_mbox({:zmq, s2, msg, [:rcvmore]})
@@ -433,12 +434,12 @@ defmodule Exzmq.ZMQ3Test do
     assert_mbox_empty()
 
     :ok = Exzmq.send(s1, [msg])
-    assert_mbox({:zmq, s2, Id, [:rcvmore]})
+    assert_mbox({:zmq, s2, id, [:rcvmore]})
     assert_mbox({:zmq, s2, <<>>, [:rcvmore]})
     assert_mbox({:zmq, s2, msg, []})
     assert_mbox_empty()
 
-    :ok = :erlzmq.send(s2, Id, [:sndmore])
+    :ok = :erlzmq.send(s2, id, [:sndmore])
     :ok = :erlzmq.send(s2, <<>>, [:sndmore])
     :ok = :erlzmq.send(s2, msg, [:sndmore])
     :ok = :erlzmq.send(s2, msg)
@@ -454,7 +455,7 @@ defmodule Exzmq.ZMQ3Test do
     #ct:pal("erlzmq router ID: ~p~n", [Id]),
     {:ok, <<>>} = :erlzmq.recv(s2)
     {:ok, msg} = :erlzmq.recv(s2)
-    :ok = :erlzmq.send(s2, Id, [:sndmore])
+    :ok = :erlzmq.send(s2, id, [:sndmore])
     :ok = :erlzmq.send(s2, <<>>, [:sndmore])
     :ok = :erlzmq.send(s2, msg)
     {:ok, [msg]} = Exzmq.recv(s1)

@@ -121,8 +121,8 @@ defmodule Exzmq.ZMQ3Test do
   end
 
   test "dealerrep_tcp_id_test_passive" do
-    basic_tests_erlzmq(&dealer_ping_pong_erlzmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5559, :dealer, "dealerrep_tcp_id_test_passive_dealer", :rep, "dealerrep_tcp_id_test_passive_rep",:passive,3)
-    basic_tests_ezmq(&dealer_ping_pong_ezmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5559, :dealer, "dealerrep_tcp_id_test_passive_dealer", :rep, "dealerrep_tcp_id_test_passive_rep",:passive, 3)
+    basic_tests_erlzmq(&dealer_ping_pong_erlzmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5560, :dealer, "dealerrep_tcp_id_test_passive_dealer", :rep, "dealerrep_tcp_id_test_passive_rep",:passive,3)
+    basic_tests_ezmq(&dealer_ping_pong_ezmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5560, :dealer, "dealerrep_tcp_id_test_passive_dealer", :rep, "dealerrep_tcp_id_test_passive_rep",:passive, 3)
   end
   
   test "reqdealer_tcp_test_active" do
@@ -358,18 +358,6 @@ defmodule Exzmq.ZMQ3Test do
     :ok = :erlzmq.send(s1, msg)
     {:ok, [msg,msg]} = Exzmq.recv(s2)
     :ok
-  end
-
-  def dealer_recv_loop() do
-    receive do
-        m ->
-            #ct:pal("got: ~w~n", [M]),
-            dealer_recv_loop()
-    after
-        1000 ->
-            #ct:fail(timeout)
-            assert false
-    end
   end
 
   def dealer_ping_pong_ezmq({s1, s2}, msg, :active) do

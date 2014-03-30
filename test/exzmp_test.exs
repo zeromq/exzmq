@@ -5,7 +5,7 @@ defmodule ExzmqTest do
   use ExUnit.Case, async: false
   
   test "open a req socket, bind and close" do
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}, {:identity, "test"}])
+    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
     assert Exzmq.bind(s, :tcp, 5555, []) == :ok
     assert Exzmq.close(s) == :ok
   end

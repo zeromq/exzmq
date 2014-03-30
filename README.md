@@ -25,7 +25,7 @@ to be implemented in Elixir itself.
 Main features
 -------------
 
-* ØMQ compatible
+* ØMQ compatible : ZMTP 1.0 (http://rfc.zeromq.org/spec:13)
 * 100% Elixir
 * good fault isolation (a crash in the message decoder won't take down
   your Erlang VM)
@@ -81,7 +81,7 @@ Contribution process
 
 TODO:
 -----
-
+* ZMTP 2.0
 * documentation
 * push/pull sockets
 * identity support

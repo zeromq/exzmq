@@ -6,7 +6,7 @@ defmodule Exzmp.Mixfile do
       version: "0.1.1",
       elixir: "~> 0.12.5",
       name: "Exzmp",
-      source_url: "https://github.com/plemanach/exzmq",
+      source_url: "https://github.com/zeromq/exzmq",
       deps: deps ]
   end
 

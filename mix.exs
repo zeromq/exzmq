@@ -3,19 +3,29 @@ defmodule Exzmp.Mixfile do
 
   def project do
     [ app: :exzmq,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 0.12.5",
       name: "Exzmp",
       source_url: "https://github.com/plemanach/exzmq",
       deps: deps ]
   end
 
-  # Configuration for the OTP application
-  def application do
-    [
-      mod: { Exzmq.App, [] },
-      applications: [:sasl, :gen_listener_tcp, :erlzmq]
-    ]
+  if System.get_env("ZMQ_TEST_SUITE") == "true" do
+    # Configuration for the OTP application
+    def application do
+      [
+        mod: { Exzmq.App, [] },
+        applications: [:sasl, :gen_listener_tcp, :erlzmq]
+      ]
+    end
+  else
+    # Configuration for the OTP application
+    def application do
+      [
+        mod: { Exzmq.App, [] },
+        applications: [:sasl, :gen_listener_tcp]
+      ]
+    end
   end
 
   # Returns the list of dependencies in the format:

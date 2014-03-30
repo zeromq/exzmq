@@ -114,15 +114,35 @@ defmodule Exzmq.ZMQ3Test do
     basic_tests_erlzmq(&dealer_ping_pong_erlzmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5560, :dealer, :rep, :passive, 3)
     basic_tests_ezmq(&dealer_ping_pong_ezmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5560, :dealer, :rep, :passive, 3)
   end
+
+  test "dealerrep_tcp_id_test_active" do
+    basic_tests_erlzmq(&dealer_ping_pong_erlzmq/3, 'tcp://127.0.0.1:5559', {127,0,0,1}, 5559, :dealer, "dealerrep_tcp_id_test_active_dealer", :rep, "dealerrep_tcp_id_test_active_rep",:active, 4)
+    basic_tests_ezmq(&dealer_ping_pong_ezmq/3, 'tcp://127.0.0.1:5559', {127,0,0,1}, 5559, :dealer, "dealerrep_tcp_id_test_active_dealer", :rep, "dealerrep_tcp_id_test_active_rep",:active, 4)
+  end
+
+  test "dealerrep_tcp_id_test_passive" do
+    basic_tests_erlzmq(&dealer_ping_pong_erlzmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5559, :dealer, "dealerrep_tcp_id_test_passive_dealer", :rep, "dealerrep_tcp_id_test_passive_rep",:passive,3)
+    basic_tests_ezmq(&dealer_ping_pong_ezmq/3, 'tcp://127.0.0.1:5560', {127,0,0,1}, 5559, :dealer, "dealerrep_tcp_id_test_passive_dealer", :rep, "dealerrep_tcp_id_test_passive_rep",:passive, 3)
+  end
   
+  test "reqdealer_tcp_test_active" do
+    basic_tests_erlzmq(&ping_pong_erlzmq_dealer/3, 'tcp://127.0.0.1:5561', {127,0,0,1}, 5561, :req, :dealer, :active, 3)
+    basic_tests_ezmq(&ping_pong_ezmq_dealer/3, 'tcp://127.0.0.1:5561', {127,0,0,1}, 5561, :req, :dealer, :active, 3)
+  end
+
+  test "reqdealer_tcp_test_passive" do
+    basic_tests_erlzmq(&ping_pong_erlzmq_dealer/3, 'tcp://127.0.0.1:5561', {127,0,0,1}, 5561, :req, :dealer, :passive, 3)
+    basic_tests_ezmq(&ping_pong_ezmq_dealer/3, 'tcp://127.0.0.1:5561', {127,0,0,1}, 5561, :req, :dealer, :passive, 3)
+  end
+
   test "reqdealer_tcp_id_test_active" do
     basic_tests_erlzmq(&ping_pong_erlzmq_dealer/3, 'tcp://127.0.0.1:5561', {127,0,0,1}, 5561, :req, "reqdealer_tcp_id_test_active_req", :dealer, "reqdealer_tcp_test_active_dealer", :active, 3)
     basic_tests_ezmq(&ping_pong_ezmq_dealer/3, 'tcp://127.0.0.1:5561', {127,0,0,1}, 5561, :req, "reqdealer_tcp_id_test_active_req", :dealer, "reqdealer_tcp_test_active_dealer", :active, 3)
   end
 
   test "reqdealer_tcp_id_test_passive" do
-    basic_tests_erlzmq(&ping_pong_erlzmq_dealer/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, "reqdealer_tcp_id_test_passive_req", :dealer, "reqdealer_tcp_test_passive_dealer", :active, 3)
-    basic_tests_ezmq(&ping_pong_ezmq_dealer/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, "reqdealer_tcp_id_test_passive_req", :dealer, "reqdealer_tcp_test_passive_dealer", :active, 3)
+    basic_tests_erlzmq(&ping_pong_erlzmq_dealer/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, "reqdealer_tcp_id_test_passive_req", :dealer, "reqdealer_tcp_test_passive_dealer", :passive, 3)
+    basic_tests_ezmq(&ping_pong_ezmq_dealer/3, 'tcp://127.0.0.1:5562', {127,0,0,1}, 5562, :req, "reqdealer_tcp_id_test_passive_req", :dealer, "reqdealer_tcp_test_passive_dealer", :passive, 3)
   end
 
   test "reqrouter_tcp_test_active" do

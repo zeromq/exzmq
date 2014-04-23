@@ -148,6 +148,18 @@ defmodule ExzmqTest do
     {s1, s2}
   end
 
+  def basic_test_push_pull(ip, port, cnt2, mode, size) do
+    {s1, s2} = create_bound_pair_multi(:push, :pull, cnt2, mode, ip, port)
+    msg = String.duplicate("X", size)
+
+    ## send a message for each client Socket and expect a result on each socket
+    Enum.each(s2, fn(_s) -> :ok = Exzmq.send(s1, [msg]) end)
+    Enum.each(s2, fn(s) -> {:ok, [msg]} = Exzmq.recv(s) end)
+
+    :ok = Exzmq.close(s1)
+    Enum.each(s2, fn(s) -> :ok = Exzmq.close(s) end)
+  end
+
   def basic_test_dealer_rep(ip, port, cnt2, mode, size) do
     {s1, s2} = create_bound_pair_multi(:dealer, :rep, cnt2, mode, ip, port)
     msg = String.duplicate("X", size)
@@ -170,6 +182,10 @@ defmodule ExzmqTest do
 
     :ok = Exzmq.close(s1)
     Enum.each(s2, fn(s) -> :ok = Exzmq.close(s) end)
+  end
+
+  test "basic test push pull" do
+    basic_test_push_pull({127,0,0,1}, 5589, 10, :passive, 3)
   end
 
   test "basic test dealer" do

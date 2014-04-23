@@ -296,7 +296,8 @@ defmodule Exzmq do
     defp socket_types(type) do
       supmod = [{:req, Exzmq.Socket.Req}, {:rep, Exzmq.Socket.Rep},
                 {:dealer, Exzmq.Socket.Dealer}, {:router, Exzmq.Socket.Router},
-                {:pub, Exzmq.Socket.Pub}, {:sub, Exzmq.Socket.Sub}]
+                {:pub, Exzmq.Socket.Pub}, {:sub, Exzmq.Socket.Sub},
+                {:push, Exzmq.Socket.Push}, {:pull, Exzmq.Socket.Pull}]
       :proplists.get_value(type, supmod)
     end
             

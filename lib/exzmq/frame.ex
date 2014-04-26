@@ -37,12 +37,6 @@ defmodule Exzmq.Frame do
     {{:greeting, ver, nil, identity}, rem}
   end
 
-  def decode_greeting({1,0}, frame_len, _idflags, msg, _data) do
-    idlen = frame_len - 1
-    <<_::[size(idlen), bytes], rem::binary>> = msg
-    {:invalid, rem}
-  end
-
   def decode(ver, data = <<0xff, length::[size(64), unsigned, integer], 
                                  flags::[size(8), bits], rest::binary>>) do
     decode(ver, length, flags, rest, data)
@@ -71,7 +65,7 @@ defmodule Exzmq.Frame do
   end
 
   def encode_greeting({1,0}, _socket_type, identity) when is_binary(identity) do
-    msg = encode(identity, @flag_none, [], [])
+    encode(identity, @flag_none, [], [])
   end
 
   def encode(msg) when is_list(msg) do
@@ -79,7 +73,7 @@ defmodule Exzmq.Frame do
   end
 
   def encode([], acc) do
-   iolist_to_binary(Enum.reverse(acc))
+   iodata_to_binary(Enum.reverse(acc))
   end
 
   def encode([{:label, head}|rest],acc) do
@@ -95,7 +89,7 @@ defmodule Exzmq.Frame do
   end
 
   def encode(frame, flags, rest, acc) when is_list(frame) do
-    encode(iolist_to_binary(frame), flags, rest, acc)
+    encode(iodata_to_binary(frame), flags, rest, acc)
   end
 
   def encode(frame, flags, rest, acc) when is_binary(frame) do

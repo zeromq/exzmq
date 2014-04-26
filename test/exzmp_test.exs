@@ -85,7 +85,7 @@ defmodule ExzmqTest do
                   {:ok, l} = :gen_tcp.listen(5555,[{:active, false}, {:packet, :raw}, {:reuseaddr, true}])
                   {:ok, s1} = :gen_tcp.accept(l)
                   t = <<1,0xFF,"TRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASH">>
-                  :gen_tcp.send(s1, iolist_to_binary([t,t,t,t,t]))
+                  :gen_tcp.send(s1, iodata_to_binary([t,t,t,t,t]))
                   :timer.sleep(500)
                   :gen_tcp.close(s1)
                   send(self, :done)
@@ -104,7 +104,7 @@ defmodule ExzmqTest do
     Process.spawn(fn() ->
                   {:ok, l} = :gen_tcp.connect({127,0,0,1},5555,[{:active, false}, {:packet, :raw}])
                   t = <<1,0xFF,"TRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASH">>
-                  :gen_tcp.send(l, iolist_to_binary([t,t,t,t,t]))
+                  :gen_tcp.send(l, iodata_to_binary([t,t,t,t,t]))
                   :timer.sleep(500)
                   :gen_tcp.close(l)
                   send(self, :done) end)

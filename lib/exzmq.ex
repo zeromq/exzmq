@@ -40,7 +40,7 @@ defmodule Exzmq do
         :gen_server.start(__MODULE__, {self(), opts}, [@server_opts])
     end
 
-    defp socket_link(opts) when is_list(opts) do
+    def socket_link(opts) when is_list(opts) do
         start_link(opts)
     end
 
@@ -264,7 +264,8 @@ defmodule Exzmq do
       transports != []
     end
 
-    """ walk the list of transports
+    """ 
+      walk the list of transports
     - this is intended to hide the details of the transports impl.
     """
     def do_transports_while(_fun, _data, [], default) do
@@ -317,7 +318,8 @@ defmodule Exzmq do
        Exzmq.Socket.Fsm.init(type, opts, mqsstate1)
     end
 
-    """--------------------------------------------------------------------
+    """
+    --------------------------------------------------------------------
     %% @private
     %% @doc
     %% Handling call messages
@@ -407,7 +409,8 @@ defmodule Exzmq do
         {:reply, :ok, new_state}
     end
 
-    """--------------------------------------------------------------------
+    """
+    --------------------------------------------------------------------
     %% @private
     %% @doc
     %% Handling cast messages
@@ -477,7 +480,8 @@ defmodule Exzmq do
         {:noreply, state}
     end
 
-    """--------------------------------------------------------------------
+    """
+    --------------------------------------------------------------------
     %% @private
     %% @doc
     %% Handling all non call/cast messages
@@ -513,7 +517,8 @@ defmodule Exzmq do
         {:noreply, state}
     end
     
-    """--------------------------------------------------------------------
+    """
+    --------------------------------------------------------------------
     %% @private
     %% @doc
     %% This function is called by a gen_server when it is about to
@@ -530,7 +535,8 @@ defmodule Exzmq do
         :ok
     end
 
-    """%%--------------------------------------------------------------------
+    """
+    --------------------------------------------------------------------
     %% @private
     %% @doc
     %% Convert process state when code is changed
@@ -806,7 +812,7 @@ defmodule Exzmq do
     end
 
     defp do_setopts({:identity, id}, mqsstate) do
-        mqsstate.update(identity: iolist_to_binary(id))
+        mqsstate.update(identity: iodata_to_binary(id))
     end
 
     defp do_setopts({:active, :once}, mqsstate) do

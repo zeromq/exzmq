@@ -1,2 +1,3 @@
-[ "erlzmq": {:git, "git://github.com/zeromq/erlzmq2.git", "30249a36b39482a98772c881334ee703715a54cc", [tag: "2.1.11"]},
-  "gen_listener_tcp": {:git, "git://github.com/kaos/gen_listener_tcp.git", "52be852254bf751e6d339e664d1c4ad7d3936edf", []} ]
+%{"erlzmq": {:git, "git://github.com/zeromq/erlzmq2.git", "30249a36b39482a98772c881334ee703715a54cc", [tag: "2.1.11"]},
+  "ex_doc": {:git, "git://github.com/elixir-lang/ex_doc.git", "1ce6f1068cf1eeb97e9104977bed87e2a8c3be61", []},
+  "gen_listener_tcp": {:git, "git://github.com/kaos/gen_listener_tcp.git", "52be852254bf751e6d339e664d1c4ad7d3936edf", []}}

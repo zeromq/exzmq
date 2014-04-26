@@ -16,18 +16,18 @@ defmodule Exzmq.Socket.Push do
 	##===================================================================
 	@type state_name :: atom
 	@type reason :: atom
-    @spec init(tuple) :: {:ok, state_name, State.t} | {:stop, reason}
-    def init(_opts) do
-      {:ok, :idle, State.new}
-    end
+  @spec init(tuple) :: {:ok, state_name, State.t} | {:stop, reason}
+  def init(_opts) do
+    {:ok, :idle, State.new}
+  end
 
-    def close(_state_name, _transport, mqsstate, state) do
-      {:next_state, :idle, mqsstate, state}
-    end
+  def close(_state_name, _transport, mqsstate, state) do
+    {:next_state, :idle, mqsstate, state}
+  end
 
-    def encap_msg({_transport, msg}, _state_name, _mqsstate, _state) do
-      Exzmq.simple_encap_msg(msg)
-    end
+  def encap_msg({_transport, msg}, _state_name, _mqsstate, _state) do
+    Exzmq.simple_encap_msg(msg)
+  end
 
 	def decap_msg(_transport, {_remoteId, msg}, _stateName, _mqsstate, _state) do
 	  Exzmq.simple_decap_msg(msg)

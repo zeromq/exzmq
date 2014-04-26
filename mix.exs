@@ -3,8 +3,8 @@ defmodule Exzmp.Mixfile do
 
   def project do
     [ app: :exzmq,
-      version: "0.1.1",
-      elixir: "~> 0.12.5",
+      version: "0.13.0",
+      elixir: "~> 0.13",
       name: "Exzmp",
       source_url: "https://github.com/zeromq/exzmq",
       deps: deps ]
@@ -43,7 +43,7 @@ defmodule Exzmp.Mixfile do
   else
     defp deps do
       [
-        {:gen_listener_tcp, github: "kaos/gen_listener_tcp"},
+        {:gen_listener_tcp, github: "kaos/gen_listener_tcp"}
       ]
     end
   end

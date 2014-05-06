@@ -69,7 +69,7 @@ defmodule Exzmq do
     # todo create macro when port?(port)
     def bind(socket, :tcp, port, opts)  do
 
-        valid = case ListDict.get(opts, :ip) do
+        valid = case Dict.get(opts, :ip) do
             nil -> {:ok, nil};
             address -> validate_address(address)
         end

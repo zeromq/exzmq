@@ -4,8 +4,8 @@ defmodule Exzmp.Mixfile do
   def project do
     [ app: :exzmq,
       version: "0.13.0",
-      elixir: "~> 0.13",
-      name: "Exzmp",
+      elixir: "~> 1.1",
+      name: "Exzmq",
       source_url: "https://github.com/zeromq/exzmq",
       deps: deps ]
   end

@@ -16,13 +16,9 @@ defmodule Exzmq.Link do
              {:packet, :raw},
              {:reuseaddr, true}]
 
-
-  defrecord State, mqsocket: nil, identity: <<>>, remote_id: <<>>, socket: nil, version: {1,0}, frames: [], pending: <<>> do
-     record_type mqsocket: pid, identity: binary, remote_id: binary
-  end
+  alias Exzmq.Link.State
 
   def start_link do
-
     :gen_fsm.start_link(__MODULE__, [], [@fsm_opts])
   end 
 
@@ -49,11 +45,11 @@ defmodule Exzmq.Link do
 
   def init([]) do
     Process.flag(:trap_exit, true)
-    {:ok,:setup, State.new, @startup_timeout}
+    {:ok,:setup, %State{}, @startup_timeout}
   end
 
   def setup({:accept, mqsocket, identity, socket}, state) do
-    newstate = state.update(mqsocket: mqsocket, identity: identity, socket: socket)
+    newstate = %{state | mqsocket: mqsocket, identity: identity, socket: socket}
     packet = Exzmq.Frame.encode_greeting(state.version, nil, identity)
     send_packet(packet, {:next_state, :open, newstate, @connect_timeout})
   end
@@ -61,7 +57,7 @@ defmodule Exzmq.Link do
   def setup({:connect, mqsocket, identity, :tcp, address, port, tcpopts, timeout}, state) do
     case :gen_tcp.connect(address, port, tcpopts, timeout) do
       {:ok, socket} -> 
-        newstate = state.update(mqsocket: mqsocket, identity: identity, socket: socket)
+        newstate = %{state | mqsocket: mqsocket, identity: identity, socket: socket}
         :ok = :inet.setopts(socket, [{:active,:once}])
         {:next_state, :connecting, newstate, @connect_timeout}
       reply ->
@@ -70,20 +66,20 @@ defmodule Exzmq.Link do
      end
   end
 
-  def connecting(:timeout, state = State[mqsocket: mqsocket]) do
+  def connecting(:timeout, %State{mqsocket: mqsocket} = state) do
     Exzmq.deliver_connect(mqsocket, {:error, :timeout})
     {:stop, :normal, state}
   end
   
   def connecting({:greeting, ver, _socket_type, remote_id0},
-                 state = State[mqsocket: mqsocket, identity: identity]) do
+                 %State{mqsocket: mqsocket, identity: identity} = state) do
     remoteid = Exzmq.remote_id_assign(remote_id0)
     Exzmq.deliver_connect(mqsocket, {:ok, remoteid})
     packet = Exzmq.Frame.encode_greeting(state.version, :undefined, identity)
-    send_packet(packet, {:next_state, :connected, state.update(remote_id: remoteid, version: ver)})
+    send_packet(packet, {:next_state, :connected, %{state | remote_id: remoteid, version: ver}})
   end
 
-  def connecting(_msg, state = State[mqsocket: mqsocket]) do
+  def connecting(_msg, %State{mqsocket: mqsocket} = state) do
     Exzmq.deliver_connect(mqsocket, {:error, :data})
     {:stop, :normal, state}
   end
@@ -93,10 +89,10 @@ defmodule Exzmq.Link do
   end
 
   def open({:greeting, ver, _socket_type, remote_id0}, 
-           State[mqsocket: mqsocket] = state) do
+           %State{mqsocket: mqsocket} = state) do
     remoteid = Exzmq.remote_id_assign(remote_id0)
     Exzmq.deliver_accept(mqsocket, remoteid)
-    {:next_state, :connected, state.update(remote_id: remoteid, version: ver)}
+    {:next_state, :connected, %{state | remote_id: remoteid, version: ver}}
   end
 
   def open(_msg, state) do
@@ -107,7 +103,7 @@ defmodule Exzmq.Link do
     {:stop, :normal, state}
   end
 
-  def connected({:in, [_head | frames]}, State[mqsocket: mqsocket, remote_id: remoteid] = state) do
+  def connected({:in, [_head | frames]}, %State{mqsocket: mqsocket, remote_id: remoteid} = state) do
     Exzmq.deliver_recv(mqsocket, {remoteid, frames})
     {:next_state, :connected, state}
   end
@@ -129,36 +125,36 @@ defmodule Exzmq.Link do
     {:reply, reply, state_name, state}
   end
 
-  def handle_info({:'EXIT', mqsocket, _reason}, _state_name, State[mqsocket: mqsocket] = state) do
-    {:stop, :normal, state.update(mqsocket: nil)}
+  def handle_info({:'EXIT', mqsocket, _reason}, _state_name, %State{mqsocket: mqsocket} = state) do
+    {:stop, :normal, %{state | mqsocket: nil}}
   end
 
-  def handle_info({:tcp, socket, data}, state_name, State[socket: socket] = state) do
-    state1 = state.update(pending: state.pending <> data)
+  def handle_info({:tcp, socket, data}, state_name, %State{socket: socket} = state) do
+    state1 = %{state | pending: state.pending <> data}
     handle_data(state_name, state1, {:next_state, state_name, state1})
   end
 
-  def handle_info({:tcp_closed, socket}, _state_name, State[socket: socket] = state) do
+  def handle_info({:tcp_closed, socket}, _state_name, %State{socket: socket} = state) do
     #?DEBUG("client disconnected: ~w~n", [Socket]),
     {:stop, :normal, state}
   end
 
-  def handle_data(_state_name, State[socket: socket, pending: <<>>], process_state_next) do
+  def handle_data(_state_name, %State{socket: socket, pending: <<>>}, process_state_next) do
     :ok = :inet.setopts(socket, [{:active, :once}])
     process_state_next
   end
 
-  def handle_data(state_name, State[socket: socket, pending: pending]= state, process_state_next)
+  def handle_data(state_name, %State{socket: socket, pending: pending} = state, process_state_next)
     when state_name === :connecting or state_name === :open do
 
      {msg, data_rest} = Exzmq.Frame.decode_greeting(pending)
-     state1 = state.update(pending: data_rest)
+     state1 = %{state | pending: data_rest}
 
      case msg do
 
        :more ->
              :ok = :inet.setopts(socket,[{:active, :once}])
-             set_elem(process_state_next, 2, state1)
+             put_elem(process_state_next, 2, state1)
 
        :invalid ->
              fake_msg ={:greeting, {1,0}, nil, ""}
@@ -171,36 +167,36 @@ defmodule Exzmq.Link do
      end
    end
 
-   def handle_data(state_name, State[socket: socket, version: ver, pending: pending] = state, 
+   def handle_data(state_name, %State{socket: socket, version: ver, pending: pending} = state, 
                    process_state_next) do
 
      {msg, data_rest} = Exzmq.Frame.decode(ver, pending)
-     state1 = state.update(pending: data_rest)
+     state1 = %{state | pending: data_rest}
 
      case msg do
        :more ->
              :ok = :inet.setopts(socket,[{:active, :once}])
-             set_elem(process_state_next, 2, state1)
+             put_elem(process_state_next, 2, state1)
        :invalid ->
              {:stop, :normal, state1}   
        {true, frame} ->
-             state2 = state1.update(frames: [frame|state1.frames])
-             handle_data(state_name, state2, set_elem(process_state_next, 2, state2))
+             state2 = %{state1 | frames: [frame|state1.frames]}
+             handle_data(state_name, state2, put_elem(process_state_next, 2, state2))
        {false, frame} ->
              frames = Enum.reverse([frame|state1.frames])
-             state2 = state1.update(frames: [])
+             state2 = %{state1 | frames: []}
              reply = exec_sync(frames, state_name, state2)
              handle_data_reply(reply)
        end
     end
 
-    def terminate(_reason, _state_name, State[mqsocket: mqsocket, socket: socket])  when is_port(socket)  do
+    def terminate(_reason, _state_name, %State{mqsocket: mqsocket, socket: socket})  when is_port(socket)  do
       Exzmq.deliver_close(mqsocket)
       :gen_tcp.close(socket)
       :ok
     end
 
-    def terminate(_reason, _state_name, State[mqsocket: mqsocket]) do
+    def terminate(_reason, _state_name, %State{mqsocket: mqsocket}) do
       Exzmq.deliver_close(mqsocket)
       :ok
     end

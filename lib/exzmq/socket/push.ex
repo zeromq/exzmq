@@ -3,10 +3,6 @@
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 defmodule Exzmq.Socket.Push do
 
-	defrecord State do
-
-	end
-
 	##===================================================================
 	## API
 	##===================================================================
@@ -18,7 +14,7 @@ defmodule Exzmq.Socket.Push do
 	@type reason :: atom
   @spec init(tuple) :: {:ok, state_name, State.t} | {:stop, reason}
   def init(_opts) do
-    {:ok, :idle, State.new}
+    {:ok, :idle, %{}}
   end
 
   def close(_state_name, _transport, mqsstate, state) do
@@ -33,15 +29,15 @@ defmodule Exzmq.Socket.Push do
 	  Exzmq.simple_decap_msg(msg)
 	end
 
-	def idle(:check, {:send, _msg}, Exzmq.Socket[transports: []], _state) do
+	def idle(:check, {:send, _msg}, %Exzmq.Socket{transports: []}, _state) do
 	  {:queue, :block}
 	end
 
-	def idle(:check, {:send, _msg}, Exzmq.Socket[transports: [head|_]], _state) do
+	def idle(:check, {:send, _msg}, %Exzmq.Socket{transports: [head|_]}, _state) do
 	  {:ok, head};
 	end
 
-	def idle(:check, :dequeue_send, Exzmq.Socket[transports: [head|_]], _state) do
+	def idle(:check, :dequeue_send, %Exzmq.Socket{transports: [head|_]}, _state) do
 	  {:ok, head}
 	end
 

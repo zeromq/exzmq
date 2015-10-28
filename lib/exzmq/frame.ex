@@ -15,34 +15,34 @@ defmodule Exzmq.Frame do
   def frame_type(0, 1), do: :label
   def frame_type(_,_), do: :normal
 
-  def decode_greeting(data = <<0xff, length::[size(64), unsigned, integer], 
+  def decode_greeting(data = <<0xff, length::unsigned-integer-size(64), 
                                      idflags::size(8), rest::binary>>) do
     decode_greeting({1,0}, length, idflags, rest, data)
   end
 
-  def decode_greeting(data = <<length::[size(8), integer], 
+  def decode_greeting(data = <<length::integer-size(8), 
                                idflags::size(8), rest::binary>>) do
     decode_greeting({1,0}, length, idflags, rest, data)
   end
 
   def decode_greeting(data), do: {:more, data}
 
-  def decode_greeting({1,0}, frame_len, _idflags, msg, data) when size(msg) < frame_len - 1 do
+  def decode_greeting({1,0}, frame_len, _idflags, msg, data) when byte_size(msg) < frame_len - 1 do
     {:more, data}
   end
 
   def decode_greeting(ver = {1,0}, frame_len, _idflags, msg, _data) do
     idlen = frame_len - 1
-    <<identity::[size(idlen), bytes], rem::binary>> = msg
+    <<identity::bytes-size(idlen), rem::binary>> = msg
     {{:greeting, ver, nil, identity}, rem}
   end
 
-  def decode(ver, data = <<0xff, length::[size(64), unsigned, integer], 
-                                 flags::[size(8), bits], rest::binary>>) do
+  def decode(ver, data = <<0xff, length::unsigned-integer-size(64), 
+                                 flags::bits-size(8), rest::binary>>) do
     decode(ver, length, flags, rest, data)
   end
 
-  def decode(ver, data = <<length::[size(8), integer], flags::[size(8), bits], rest::binary>>) do
+  def decode(ver, data = <<length::integer-size(8), flags::bits-size(8), rest::binary>>) do
     decode(ver, length, flags, rest, data)
   end
 
@@ -54,13 +54,13 @@ defmodule Exzmq.Frame do
    {:invalid, data}
   end
 
-  def decode(_ver, frame_len, _flags, msg, data) when size(msg) < frame_len - 1 do
+  def decode(_ver, frame_len, _flags, msg, data) when byte_size(msg) < frame_len - 1 do
    {:more, data}
   end
 
   def decode(ver, frame_len, <<label::size(1), _::size(6), more::size(1)>>, msg, _data) do
    flen = frame_len - 1
-   <<frame::[size(flen), bytes], rem::binary>> = msg
+   <<frame::bytes-size(flen), rem::binary>> = msg
    {{bool(more), {frame_type(ver, label), frame}}, rem}
   end
 
@@ -73,7 +73,7 @@ defmodule Exzmq.Frame do
   end
 
   def encode([], acc) do
-   iodata_to_binary(Enum.reverse(acc))
+   IO.iodata_to_binary(Enum.reverse(acc))
   end
 
   def encode([{:label, head}|rest],acc) do
@@ -89,11 +89,11 @@ defmodule Exzmq.Frame do
   end
 
   def encode(frame, flags, rest, acc) when is_list(frame) do
-    encode(iodata_to_binary(frame), flags, rest, acc)
+    encode(IO.iodata_to_binary(frame), flags, rest, acc)
   end
 
   def encode(frame, flags, rest, acc) when is_binary(frame) do
-    length = size(frame) + 1
+    length = byte_size(frame) + 1
     
     if length >= 255 do
       header = <<0xff, length::size(64)>>

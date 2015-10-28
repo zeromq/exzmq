@@ -3,10 +3,6 @@
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 defmodule Exzmq.Socket.Router do
     
-    defrecord State do
-
-	end
-
 	##===================================================================
 	## API
 	##===================================================================
@@ -26,7 +22,7 @@ defmodule Exzmq.Socket.Router do
 	##--------------------------------------------------------------------
 
     def init(_opts) do
-      {:ok, :idle, State.new}
+      {:ok, :idle, %{}}
      end
 
     def close(_state_name, _transport, mqsstate, state) do
@@ -41,7 +37,7 @@ defmodule Exzmq.Socket.Router do
 	  {remoteId, Exzmq.simple_decap_msg(msg)}
 	end
 
-	def idle(:check, {:send, _msg}, Exzmq.Socket[transports: []], _state) do
+	def idle(:check, {:send, _msg}, %Exzmq.Socket{transports: []}, _state) do
 	  {:drop, :not_connected}
 	end
 

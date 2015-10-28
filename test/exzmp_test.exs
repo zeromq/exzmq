@@ -30,7 +30,7 @@ defmodule ExzmqTest do
   end
 
   test "open req socket with existing endpoint and wait connecting timeout" do
-    Process.spawn(fn() ->
+    spawn(fn() ->
                     {:ok, l} = :gen_tcp.listen(5555,[{:active, false}, {:packet, :raw}, {:reuseaddr, true}])
                     {:ok, s1} = :gen_tcp.accept(l)
                     :timer.sleep(15000) ## keep socket alive for at least 10sec...
@@ -65,7 +65,7 @@ defmodule ExzmqTest do
   end
 
   test "open req dealer and wait connecting timeout" do
-    Process.spawn(fn() ->
+    spawn(fn() ->
                   {:ok, l} = :gen_tcp.listen(5555,[{:active, false}, {:packet, :raw}, {:reuseaddr, true}])
                   {:ok, s1} = :gen_tcp.accept(l)
                   :timer.sleep(15000) ## keep socket alive for at least 10sec...
@@ -81,11 +81,11 @@ defmodule ExzmqTest do
 
   test "open req socket and send trash" do
     self = self()
-    Process.spawn(fn() ->
+    spawn(fn() ->
                   {:ok, l} = :gen_tcp.listen(5555,[{:active, false}, {:packet, :raw}, {:reuseaddr, true}])
                   {:ok, s1} = :gen_tcp.accept(l)
                   t = <<1,0xFF,"TRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASH">>
-                  :gen_tcp.send(s1, iodata_to_binary([t,t,t,t,t]))
+                  :gen_tcp.send(s1, IO.iodata_to_binary([t,t,t,t,t]))
                   :timer.sleep(500)
                   :gen_tcp.close(s1)
                   send(self, :done)
@@ -101,10 +101,10 @@ defmodule ExzmqTest do
     self = self()
     {:ok, s} = Exzmq.socket([{:type, :rep}, {:active, false}])
     :ok = Exzmq.bind(s, :tcp, 5555, [])
-    Process.spawn(fn() ->
+    spawn(fn() ->
                   {:ok, l} = :gen_tcp.connect({127,0,0,1},5555,[{:active, false}, {:packet, :raw}])
                   t = <<1,0xFF,"TRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASHTRASH">>
-                  :gen_tcp.send(l, iodata_to_binary([t,t,t,t,t]))
+                  :gen_tcp.send(l, IO.iodata_to_binary([t,t,t,t,t]))
                   :timer.sleep(500)
                   :gen_tcp.close(l)
                   send(self, :done) end)
@@ -116,7 +116,7 @@ defmodule ExzmqTest do
   test "open a rep socket and wait time out" do
       {:ok, s} = Exzmq.socket([{:type, :rep}, {:active, false}])
       :ok = Exzmq.bind(s, :tcp, 5555, [])
-      Process.spawn(fn() ->
+      spawn(fn() ->
                     {:ok, l} = :gen_tcp.connect({127,0,0,1},5555,[{:active, false}, {:packet, :raw}])
                     :timer.sleep(15000) ## keep socket alive for at least 10sec...
                     :gen_tcp.close(l) end)
@@ -286,7 +286,7 @@ defmodule ExzmqTest do
   def shutdown_stress_worker_loop(_p, 0), do: :ok
 
   def shutdown_stress_worker_loop(p, n) do
-    Process.spawn(__MODULE__, :worker, [self(), 5558 + p])
+    spawn(__MODULE__, :worker, [self(), 5558 + p])
     shutdown_stress_worker_loop(p, n-1)
   end
 
@@ -306,13 +306,13 @@ defmodule ExzmqTest do
 
   test "open req socket and wait hello reply" do
       self = self()
-      Process.spawn(fn() ->
+      spawn(fn() ->
                       {:ok,l} = :gen_tcp.listen(5555,[:binary, {:active, false}, {:packet, :raw}, {:reuseaddr, true}, {:nodelay, true}])
                       {:ok, s1} = :gen_tcp.accept(l)
                       req_tcp_fragment_send(s1, <<0x01,0x00>>)
                       {:ok, _} = :gen_tcp.recv(s1, 0)
                       send self, :connected
-                      {:ok,<<_::[size(4),bytes],"ZZZ">>} = :gen_tcp.recv(s1, 0)
+                      {:ok,<<_::bytes-size(4),"ZZZ">>} = :gen_tcp.recv(s1, 0)
                       req_tcp_fragment_send(s1, <<0x01, 0x7F, 0x06, 0x7E, "Hello">>)
                       :gen_tcp.close(s1)
                       send self, :done

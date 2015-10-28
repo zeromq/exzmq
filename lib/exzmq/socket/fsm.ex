@@ -8,15 +8,15 @@ defmodule Exzmq.Socket.Fsm do
   @type check_type :: :'send' | :'dequeue_send' | :'deliver' | :'deliver_recv' | :'recv'
   @type do_type :: :'queue_send' | {:'deliver_send', list(transport)} | {:'deliver', transport} | {:'queue', transport} | {:'dequeue', transport}
 
-   defrecord FsmState, module: nil, state_name: nil, state: nil
+  alias Exzmq.Socket.FsmState
 
     def init(module, opts, mqsstate) do
 
         case apply(module, :init, [opts]) do
             {:ok, state_name, state} ->
 
-                fsm = FsmState[module: module, state_name: state_name, state: state]
-                mqsstate1 = mqsstate.update(fsm: fsm)
+                fsm = %FsmState{module: module, state_name: state_name, state: state}
+                mqsstate1 = %{mqsstate | fsm: fsm}
                 {:ok, mqsstate1}
             reply ->
                 {reply, mqsstate}
@@ -24,9 +24,9 @@ defmodule Exzmq.Socket.Fsm do
     end
 
     # check actions do not alter the state of the FSM
-    def check(action, mqsstate = Exzmq.Socket[fsm: fsm]) do
+    def check(action, mqsstate = %Exzmq.Socket{fsm: fsm}) do
 
-        FsmState[module: module, state_name: state_name, state: state] = fsm
+        %FsmState{module: module, state_name: state_name, state: state} = fsm
 
 
         r = apply(module, state_name,[:check, action, mqsstate, state])
@@ -35,8 +35,8 @@ defmodule Exzmq.Socket.Fsm do
         r
     end
 
-    def work(action, mqsstate = Exzmq.Socket[fsm: fsm]) do
-        FsmState[module: module, state_name: state_name, state: state] = fsm
+    def work(action, mqsstate = %Exzmq.Socket{fsm: fsm}) do
+        %FsmState{module: module, state_name: state_name, state: state} = fsm
 
         case apply(module, state_name, [:do, action, mqsstate, state]) do
             {:error, reason} ->
@@ -44,13 +44,13 @@ defmodule Exzmq.Socket.Fsm do
                 :erlang.error(reason);
             {:next_state, next_state_name, next_mqsstate, next_state} ->
                 #?DEBUG("ezmq_socket_fsm: state: ~w, Action: ~w, next_state: ~w~n", [StateName, Action, NextStateName]),
-                new_fsm = fsm.update(state_name: next_state_name, state: next_state)
-                next_mqsstate.update(fsm: new_fsm)
+                new_fsm = %{fsm | state_name: next_state_name, state: next_state}
+                %{next_mqsstate | fsm: new_fsm}
         end
     end
 
-    def close(transport, mqsstate = Exzmq.Socket[fsm: fsm]) do
-        FsmState[module: module, state_name: state_mame, state: state] = fsm
+    def close(transport, mqsstate = %Exzmq.Socket{fsm: fsm}) do
+        %FsmState{module: module, state_name: state_mame, state: state} = fsm
 
         case apply(module, :close, [state_mame, transport, mqsstate, state]) do
             {:error, reason} ->
@@ -58,26 +58,26 @@ defmodule Exzmq.Socket.Fsm do
                 :erlang.error(reason)
             {:next_state, next_state_name, next_mqsstate, next_state} ->
                 #?DEBUG("ezmq_socket_fsm: state: ~w, Action: ~w, next_state: ~w~n", [StateName, Action, NextStateName]),
-                new_fsm = fsm.update(state_name: next_state_name, state: next_state)
-                next_mqsstate.update(fsm: new_fsm)
+                new_fsm = %{fsm | state_name: next_state_name, state: next_state}
+                %{next_mqsstate | fsm: new_fsm}
         end
     end
 
-    def encap_msg({transport, msg}, mqsstate = Exzmq.Socket[fsm: fsm])
+    def encap_msg({transport, msg}, mqsstate = %Exzmq.Socket{fsm: fsm})
       when is_pid(transport) or is_list(msg) do
-        FsmState[module: module, state_name: state_name, state: state] = fsm
+        %FsmState{module: module, state_name: state_name, state: state} = fsm
         apply(module, :encap_msg,[{transport, msg}, state_name, mqsstate, state])
     end
 
-    def encap_msg({transport, msg = {_identity, parts}}, mqsstate = Exzmq.Socket[fsm: fsm])
+    def encap_msg({transport, msg = {_identity, parts}}, mqsstate = %Exzmq.Socket{fsm: fsm})
       when is_pid(transport) or is_list(parts) do
-        FsmState[module: module, state_name: state_name, state: state] = fsm
+        %FsmState{module: module, state_name: state_name, state: state} = fsm
         module.encap_msg({transport, msg}, state_name, mqsstate, state)
     end
 
-    def decap_msg(transport, id_msg = {_, msg}, mqsstate = Exzmq.Socket[fsm: fsm])
+    def decap_msg(transport, id_msg = {_, msg}, mqsstate = %Exzmq.Socket{fsm: fsm})
       when is_pid(transport) or is_list(msg) do
-        FsmState[module: module, state_name: state_name, state: state] = fsm
+        %FsmState{module: module, state_name: state_name, state: state} = fsm
         module.decap_msg(transport, id_msg, state_name, mqsstate, state)
     end
 end

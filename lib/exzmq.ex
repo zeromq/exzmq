@@ -2,26 +2,11 @@
 ## License, v. 2.0. If a copy of the MPL was not distributed with this
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 defmodule Exzmq do
-  use GenServer.Behaviour 
+  use GenServer 
   @server_opts {}
 
-    defrecord Socket, owner: nil, fsm: nil, identity: "",
-          # delivery mechanism
-          mode: :passive, # :: 'active'|'active_once'|'passive',
-          recv_q: [], #the queue of all recieved messages, that are blocked by a send op
-          pending_recv: :none, #tuple()|'none',
-          send_q: [], #%% the queue of all messages to send
-          pending_send:  :none, #:: tuple()|'none',
-
-          # all our registered transports
-          connecting: :orddict.new(),
-          listen_trans: :orddict.new(),
-          transports: [],
-          remote_ids: :orddict.new() do
-          record_type owner: pid, fsm: term, identity: binary, mode: :'active'|:'active_once'|:'passive'
-    end
-
-    defrecord Cargs, family: nil, address: nil, port: nil, tcpopts: nil, timeout: nil, failcnt: nil
+  alias Exzmq.Socket
+  alias Exzmq.Cargs
 
     def start_link(opts) when is_list(opts) do
        :gen_server.start_link(__MODULE__, {self(), opts}, [@server_opts])
@@ -174,20 +159,20 @@ defmodule Exzmq do
         :gen_server.cast(socket, {:deliver_close, self()})
     end
 
-    """
+    @doc """
     load balance sending sockets
     - simple round robin
 
     CHECK: is 0MQ actually doing anything else?
     """
-    def lb(transports, mqsstate = Exzmq.Socket[transports: trans]) when is_list(transports) do
+    def lb(transports, mqsstate = %Exzmq.Socket{transports: trans}) when is_list(transports) do
         trans1 = :lists.subtract(trans, transports) ++ transports
-        mqsstate.update(transports: trans1)
+        %{mqsstate | transports: trans1}
     end
 
-    def lb(transport, mqsstate = Exzmq.Socket[transports: trans]) do
+    def lb(transport, mqsstate = %Exzmq.Socket{transports: trans}) do
         trans1 = :lists.delete(transport, trans) ++ [transport]
-        mqsstate.update(transports: trans1)
+        %{mqsstate | transports: trans1}
     end
 
     defp validate_address(address) when is_binary(address) do 
@@ -207,7 +192,7 @@ defmodule Exzmq do
       pid
     end
 
-    def transports_get(remote_id, Exzmq.Socket[remote_ids: rem_ids]) do
+    def transports_get(remote_id, %Exzmq.Socket{remote_ids: rem_ids}) do
       case :orddict.find(remote_id, rem_ids) do
           {:ok, pid} -> pid
           _ -> :none
@@ -222,49 +207,49 @@ defmodule Exzmq do
       id
     end
 
-    def remote_id_exists(<<>>, Exzmq.Socket[]) do
+    def remote_id_exists(<<>>, %Exzmq.Socket{}) do
       false
     end
 
-    def remote_id_exists(remote_id, Exzmq.Socket[remote_ids: rem_ids]) do
+    def remote_id_exists(remote_id, %Exzmq.Socket{remote_ids: rem_ids}) do
       :orddict.is_key(remote_id, rem_ids)
     end
 
-    def remote_id_add(transport, remote_id, mqsstate = Exzmq.Socket[remote_ids: rem_ids]) do
-       mqsstate.update(remote_ids: :orddict.store(remote_id, transport, rem_ids))
+    def remote_id_add(transport, remote_id, mqsstate = %Exzmq.Socket{remote_ids: rem_ids}) do
+       %{mqsstate | remote_ids: :orddict.store(remote_id, transport, rem_ids)}
     end
 
-    def remote_id_del(transport, mqsstate = Exzmq.Socket[remote_ids: rem_ids]) when is_pid(transport) do
-      mqsstate.update(remote_ids: :orddict.filter(fn(_key, value) -> value != transport end, rem_ids))
+    def remote_id_del(transport, mqsstate = %Exzmq.Socket{remote_ids: rem_ids}) when is_pid(transport) do
+      %{mqsstate | remote_ids: :orddict.filter(fn(_key, value) -> value != transport end, rem_ids)}
     end
     
-    def remote_id_del(remote_id, mqsstate = Exzmq.Socket[remote_ids: rem_ids]) do
-       mqsstate.update(remote_ids: :orddict.erase(remote_id, rem_ids))
+    def remote_id_del(remote_id, mqsstate = %Exzmq.Socket{remote_ids: rem_ids}) do
+       %{mqsstate | remote_ids: :orddict.erase(remote_id, rem_ids)}
     end
 
-    def transports_is_active(transport, Exzmq.Socket[transports: transports]) do
+    def transports_is_active(transport, %Exzmq.Socket{transports: transports}) do
       :lists.member(transport, transports)
     end
 
-    def transports_activate(transport, remote_id, mqsstate = Exzmq.Socket[transports: transports]) do
+    def transports_activate(transport, remote_id, mqsstate = %Exzmq.Socket{transports: transports}) do
       mqsstate1 = remote_id_add(transport, remote_id, mqsstate)
-      mqsstate1.update(transports: [transport|transports])
+      %{mqsstate1 | transports: [transport|transports]}
     end
 
-    def transports_deactivate(transport, mqsstate = Exzmq.Socket[transports: transports]) do
+    def transports_deactivate(transport, mqsstate = %Exzmq.Socket{transports: transports}) do
       mqsstate1 = remote_id_del(transport, mqsstate)
-      mqsstate1.update(transports: :lists.delete(transport, transports))
+      %{mqsstate1 | transports: :lists.delete(transport, transports)}
     end
 
-    def transports_while(fun, data, default, Exzmq.Socket[transports: transports]) do
+    def transports_while(fun, data, default, %Exzmq.Socket{transports: transports}) do
       do_transports_while(fun, data, transports, default)
     end
 
-    def transports_connected(Exzmq.Socket[transports: transports]) do
+    def transports_connected(%Exzmq.Socket{transports: transports}) do
       transports != []
     end
 
-    """ 
+    @doc """ 
       walk the list of transports
     - this is intended to hide the details of the transports impl.
     """
@@ -283,7 +268,7 @@ defmodule Exzmq do
     # gen_server callbacks
     #===================================================================
 
-    """
+    @doc """
      @private
      @doc
      Initializes the server
@@ -313,12 +298,12 @@ defmodule Exzmq do
 
     def init_socket(owner, type, opts) do
        Process.flag(:trap_exit, true)
-       mqsstate0 = Exzmq.Socket[owner: owner, mode: :passive, recv_q: :orddict.new(), connecting: :orddict.new(), listen_trans: :orddict.new(), transports: [], remote_ids: :orddict.new()]
+       mqsstate0 = %Exzmq.Socket{owner: owner, mode: :passive, recv_q: :orddict.new(), connecting: :orddict.new(), listen_trans: :orddict.new(), transports: [], remote_ids: :orddict.new()}
        mqsstate1 = :lists.foldl(&do_setopts/2, mqsstate0, :proplists.unfold(opts))
        Exzmq.Socket.Fsm.init(type, opts, mqsstate1)
     end
 
-    """
+    @doc """
     --------------------------------------------------------------------
     %% @private
     %% @doc
@@ -333,7 +318,7 @@ defmodule Exzmq do
     %% {stop, Reason, State}
     %% @end
     """
-    def handle_call({:bind, :tcp, port, opts}, _from, mqsstate = Exzmq.Socket[identity: identity]) do
+    def handle_call({:bind, :tcp, port, opts}, _from, mqsstate = %Exzmq.Socket{identity: identity}) do
         tcpopts0 = [:binary,:inet, {:active,false}, {:send_timeout,5000}, {:backlog,10}, {:nodelay,true}, {:packet,:raw}, {:reuseaddr,true}]
         tcpopts1 = case :proplists.get_value(:ip, opts) do
                        :undefined -> tcpopts0
@@ -343,7 +328,7 @@ defmodule Exzmq do
         case Exzmq.Tcp.Socket.start_link(identity, port, tcpopts1) do
             {:ok, pid} ->
                 listen = :orddict.append(pid, {:tcp, port, opts}, mqsstate.listen_trans)
-                {:reply, :ok, mqsstate.update(listen_trans: listen)}
+                {:reply, :ok, %{mqsstate | listen_trans: listen}}
             reply ->
                 {:reply, reply, mqsstate}
         end
@@ -352,8 +337,8 @@ defmodule Exzmq do
     def handle_call({:connect, :tcp, address, port, opts}, _from, state) do
         tcpopts = [:binary, :inet, {:active,false}, {:send_timeout,5000}, {:nodelay,true}, {:packet,:raw}, {:reuseaddr,true}]
         timeout = :proplists.get_value(:timeout, opts, 5000)
-        connect_args = Cargs[family:  :tcp, address: address, port: port, tcpopts: tcpopts,
-                             timeout: timeout, failcnt: 0]
+        connect_args = %Cargs{family:  :tcp, address: address, port: port, tcpopts: tcpopts,
+                             timeout: timeout, failcnt: 0}
         newstate = do_connect(connect_args, state)
         {:reply, :ok, newstate}
     end
@@ -362,12 +347,12 @@ defmodule Exzmq do
         {:stop, :normal, :ok, state}
     end
 
-    def handle_call({:recv, _timeout}, _from, Exzmq.Socket[mode: mode] = state)
+    def handle_call({:recv, _timeout}, _from, %Exzmq.Socket{mode: mode} = state)
       when mode != :passive do
         {:reply, {:error, :active}, state}
     end
 
-    def handle_call({:recv, _timeout}, _from, Exzmq.Socket[pending_recv: pending_recv] = state)
+    def handle_call({:recv, _timeout}, _from, %Exzmq.Socket{pending_recv: pending_recv} = state)
       when pending_recv != :none do
         reply = {:error, :already_recv}
         {:reply, reply, state}
@@ -381,14 +366,14 @@ defmodule Exzmq do
         case Exzmq.Socket.Fsm.check({:send, msg}, state) do
             {:queue, action} ->
                 #TODO: HWM and swap to disk....
-                state1 = state.update(send_q: state.send_q ++ [msg])
+                state1 = %{state | send_q: state.send_q ++ [msg]}
                 state2 = Exzmq.Socket.Fsm.work(:queue_send, state1)
                 case action do
                     :return ->
                         state3 = check_send_queue(state2)
                         {:reply, :ok, state3}
                     :block ->
-                        state3 = state2.update(pending_send: from)
+                        state3 = %{state2 | pending_send: from}
                         state4 = check_send_queue(state3)
                         {:noreply, state4}
                 end
@@ -409,7 +394,7 @@ defmodule Exzmq do
         {:reply, :ok, new_state}
     end
 
-    """
+    @doc """
     --------------------------------------------------------------------
     %% @private
     %% @doc
@@ -436,7 +421,7 @@ defmodule Exzmq do
         {:noreply, state2}
     end
 
-    def handle_cast({:deliver_connect, transport, reply}, state = Exzmq.Socket[connecting: connecting]) do
+    def handle_cast({:deliver_connect, transport, reply}, state = %Exzmq.Socket{connecting: connecting}) do
         case reply do
             # transient errors
             {:error, reason} when reason == :eagain or 
@@ -445,25 +430,25 @@ defmodule Exzmq do
                                   reason == :econnreset ->
                 connect_args = :orddict.fetch(transport, connecting)
                 #?DEBUG("CArgs: ~w~n", [ConnectArgs]),
-                :erlang.send_after(3000, self(), {:reconnect, connect_args.update(failcnt: connect_args.failcnt + 1)})
-                state2 = state.update(connecting:  :orddict.erase(transport, connecting))
+                :erlang.send_after(3000, self(), {:reconnect, %{connect_args | failcnt: connect_args.failcnt + 1}})
+                state2 = %{state | connecting:  :orddict.erase(transport, connecting)}
                 {:noreply, state2}
             _ ->
-                state1 = state.update(connecting:  :orddict.erase(transport, connecting))
+                state1 = %{state | connecting:  :orddict.erase(transport, connecting)}
                 state2 = check_send_queue(state1)
                 {:noreply, state2}
         end
     end
 
-    def handle_cast({:deliver_close, transport}, state = Exzmq.Socket[connecting: connecting]) do
+    def handle_cast({:deliver_close, transport}, state = %Exzmq.Socket{connecting: connecting}) do
         Process.unlink(transport)
         state0 = transports_deactivate(transport, state)
         state1 = queue_close(transport, state0)
         state2 = Exzmq.Socket.Fsm.close(transport, state1)
         state3 = case :orddict.find(transport, connecting) do
                      {:ok, connect_args} ->
-                         :erlang.send_after(3000, self(), {:reconnect, connect_args.update(failcnt:  0)})
-                         state2.update(connecting: :orddict.erase(transport, connecting))
+                         :erlang.send_after(3000, self(), {:reconnect, %{connect_args | failcnt:  0}})
+                         %{state2 | connecting: :orddict.erase(transport, connecting)}
                      _ ->
                          check_send_queue(state2)
                  end
@@ -480,7 +465,7 @@ defmodule Exzmq do
         {:noreply, state}
     end
 
-    """
+    @doc """
     --------------------------------------------------------------------
     %% @private
     %% @doc
@@ -493,13 +478,13 @@ defmodule Exzmq do
     %%--------------------------------------------------------------------
     """
 
-    def handle_info(:recv_timeout, Exzmq.Socket[pending_recv:  {from, _}] = state) do
+    def handle_info(:recv_timeout, %Exzmq.Socket{pending_recv:  {from, _}} = state) do
         :gen_server.reply(from, {:error, :timeout})
-        state1 = state.update(pending_recv: :none)
+        state1 = %{state | pending_recv: :none}
         {:noreply, state1}
     end
 
-    def handle_info({:reconnect, connect_args}, Exzmq.Socket[] = state) do
+    def handle_info({:reconnect, connect_args}, %Exzmq.Socket{} = state) do
         new_state = do_connect(connect_args, state)
         {:noreply, new_state}
     end
@@ -517,7 +502,7 @@ defmodule Exzmq do
         {:noreply, state}
     end
     
-    """
+    @doc """
     --------------------------------------------------------------------
     %% @private
     %% @doc
@@ -535,7 +520,7 @@ defmodule Exzmq do
         :ok
     end
 
-    """
+    @doc """
     --------------------------------------------------------------------
     %% @private
     %% @doc
@@ -555,61 +540,61 @@ defmodule Exzmq do
     #%%% Internal functions
     #%%%===================================================================
 
-    defp do_connect(connect_args = Cargs[family:  :tcp], mqsstate = Exzmq.Socket[identity:  identity]) do
+    defp do_connect(connect_args = %Cargs{family: :tcp}, mqsstate = %Exzmq.Socket{identity:  identity}) do
         #?DEBUG("starting connect: ~w~n", [ConnectArgs]),
-        Cargs[address: address, port: port, tcpopts: tcp_opts,
-               timeout: timeout, failcnt: _fail_cnt] = connect_args
+        %Cargs{address: address, port: port, tcpopts: tcp_opts,
+               timeout: timeout, failcnt: _fail_cnt} = connect_args
         {:ok, transport} = Exzmq.Link.start_connection()
         Exzmq.Link.connect(identity, transport, :tcp, address, port, tcp_opts, timeout)
         connecting = :orddict.store(transport, connect_args, mqsstate.connecting)
-        mqsstate.update(connecting: connecting)
+        %{mqsstate | connecting: connecting}
     end
 
-    defp check_send_queue(mqsstate = Exzmq.Socket[send_q: []]) do
+    defp check_send_queue(mqsstate = %Exzmq.Socket{send_q: []}) do
         mqsstate
     end
 
-    defp check_send_queue(mqsstate = Exzmq.Socket[connecting: connecting, listen_trans: listen]) do
+    defp check_send_queue(mqsstate = %Exzmq.Socket{connecting: connecting, listen_trans: listen}) do
         case {transports_connected(mqsstate), :orddict.size(connecting), :orddict.size(listen)} do
             {:false, 0, 0} -> clear_send_queue(mqsstate)
             _ -> mqsstate
         end
     end
 
-    defp clear_send_queue(state = Exzmq.Socket[send_q: []]) do
+    defp clear_send_queue(state = %Exzmq.Socket{send_q: []}) do
         state
     end
 
-    defp clear_send_queue(state = Exzmq.Socket[send_q: [_msg], pending_send: from])
+    defp clear_send_queue(state = %Exzmq.Socket{send_q: [_msg], pending_send: from})
       when From != :none do
         :gen_server.reply(from, {:error, :no_connection})
         state1 = Exzmq.Socket.Fsm.work({:deliver_send, :abort}, state)
-        state1.update(send_q: [], pending_send: :none)
+        %{state1 | send_q: [], pending_send: :none}
     end
 
-    defp clear_send_queue(state = Exzmq.Socket[send_q:  [_msg|rest]]) do
+    defp clear_send_queue(state = %Exzmq.Socket{send_q:  [_msg|rest]}) do
         state1 = Exzmq.Socket.Fsm.work({:deliver_send, :abort}, state)
-        clear_send_queue(state1.update(send_q: rest))
+        clear_send_queue(%{state1 | send_q: rest})
     end
 
-    defp send_queue_run(state = Exzmq.Socket[send_q:  []]) do
+    defp send_queue_run(state = %Exzmq.Socket{send_q:  []}) do
         state
     end
 
-    defp send_queue_run(state = Exzmq.Socket[send_q: [msg], pending_send: from])
+    defp send_queue_run(state = %Exzmq.Socket{send_q: [msg], pending_send: from})
       when from != :none do
         case Exzmq.Socket.Fsm.check(:dequeue_send, state) do
             {:ok, transports} ->
                 ezmq_link_send({transports, msg}, state)
                 state1 = Exzmq.Socket.Fsm.work({:deliver_send, transports}, state)
                 :gen_server.reply(from, :ok)
-                state1.update(send_q: [], pending_send: :none)
+                %{state1 | send_q: [], pending_send: :none}
             _ ->
                 state
         end
     end
 
-    defp send_queue_run(state = Exzmq.Socket[send_q: [msg|rest]]) do
+    defp send_queue_run(state = %Exzmq.Socket{send_q: [msg|rest]}) do
         case Exzmq.Socket.Fsm.check(:dequeue_send, state) do
             {:ok, transports} ->
                 ezmq_link_send({transports, msg}, state)
@@ -628,16 +613,16 @@ defmodule Exzmq do
         end
     end 
 
-    defp queue_run_2(Exzmq.Socket[mode: mode] = state)
+    defp queue_run_2(%Exzmq.Socket{mode: mode} = state)
       when mode == :active or mode == :active_once do
         run_recv_q(state)
     end
 
-    defp queue_run_2(Exzmq.Socket[pending_recv: {_from, _ref}] = state) do
+    defp queue_run_2(%Exzmq.Socket{pending_recv: {_from, _ref}} = state) do
         run_recv_q(state)
     end
 
-    defp queue_run_2(Exzmq.Socket[mode: :passive] = state) do
+    defp queue_run_2(%Exzmq.Socket{mode: :passive} = state) do
         state
     end
 
@@ -660,26 +645,26 @@ defmodule Exzmq do
     end
 
     # send a specific message to the owner
-    defp send_owner(transport, id_msg, Exzmq.Socket[pending_recv: {from, ref}] = state) do
+    defp send_owner(transport, id_msg, %Exzmq.Socket{pending_recv: {from, ref}} = state) do
         :ok = cond_cancel_timer(ref)
-        state1 = state.update(pending_recv: :none)
+        state1 = %{state | pending_recv: :none}
         :gen_server.reply(from, {:ok, Exzmq.Socket.Fsm.decap_msg(transport, id_msg, state)})
         Exzmq.Socket.Fsm.work({:deliver, transport}, state1)
     end
 
-    defp send_owner(transport, id_msg, Exzmq.Socket[owner: owner, mode: mode] = state)
+    defp send_owner(transport, id_msg, %Exzmq.Socket{owner: owner, mode: mode} = state)
       when mode == :active or mode == :active_once do
         Kernel.send owner, {:zmq, self(), Exzmq.Socket.Fsm.decap_msg(transport, id_msg, state)}
         new_state = Exzmq.Socket.Fsm.work({:deliver, transport}, state)
         next_mode(new_state)
     end
 
-    defp next_mode(Exzmq.Socket[mode: :active] = state) do
+    defp next_mode(%Exzmq.Socket{mode: :active} = state) do
         queue_run(state)
     end
     
-    defp next_mode(Exzmq.Socket[mode: :active_once] = state) do
-        state.update(mode: :passive)
+    defp next_mode(%Exzmq.Socket{mode: :active_once} = state) do
+        %{state | mode: :passive}
     end
 
     defp handle_deliver_recv(transport, id_msg, mqsstate) do
@@ -693,7 +678,7 @@ defmodule Exzmq do
         end
     end
 
-    defp handle_deliver_recv_2(transport, id_msg, 0, Exzmq.Socket[mode: mode] = mqsstate)
+    defp handle_deliver_recv_2(transport, id_msg, 0, %Exzmq.Socket{mode: mode} = mqsstate)
       when mode == :active or mode == :active_once do
         case Exzmq.Socket.Fsm.check(:deliver, mqsstate) do
             :ok -> send_owner(transport, id_msg, mqsstate)
@@ -701,7 +686,7 @@ defmodule Exzmq do
         end
     end
 
-    defp handle_deliver_recv_2(transport, id_msg, 0, Exzmq.Socket[pending_recv: {_from, _ref}] = mqsstate) do
+    defp handle_deliver_recv_2(transport, id_msg, 0, %Exzmq.Socket{pending_recv: {_from, _ref}} = mqsstate) do
         case Exzmq.Socket.Fsm.check(:deliver, mqsstate) do
             :ok -> send_owner(transport, id_msg, mqsstate)
             _ -> queue(transport, id_msg, mqsstate)
@@ -727,7 +712,7 @@ defmodule Exzmq do
                   :infinity -> :none;
                   _ -> :erlang.send_after(timeout, self(), :recv_timeout)
               end
-        state1 = state.update(pending_recv: {from, ref})
+        state1 = %{state | pending_recv: {from, ref}}
         {:noreply, state1}
     end
 
@@ -762,33 +747,33 @@ defmodule Exzmq do
         Exzmq.Link.send(transport, Exzmq.Socket.Fsm.encap_msg({transport, msg}, state))
     end
 
-    """
+    @doc """
     %%
     %% round robin queue
     %%
     """
 
-    defp queue_size(Exzmq.Socket[recv_q: q]) do
+    defp queue_size(%Exzmq.Socket{recv_q: q}) do
         :orddict.size(q)
     end
 
-    defp queue(transport, value, mqsstate = Exzmq.Socket[recv_q: q]) do
+    defp queue(transport, value, mqsstate = %Exzmq.Socket{recv_q: q}) do
         q1 = :orddict.update(transport, fn(v) -> :queue.in(value, v) end,
                             :queue.from_list([value]), q)
-        mqsstate1 = mqsstate.update(recv_q: q1)
+        mqsstate1 = %{mqsstate | recv_q: q1}
         Exzmq.Socket.Fsm.work({:queue, transport}, mqsstate1)
     end
 
-    defp queue_close(transport, mqsstate = Exzmq.Socket[recv_q: q]) do
+    defp queue_close(transport, mqsstate = %Exzmq.Socket{recv_q: q}) do
         q1 = :orddict.erase(transport, q)
-        mqsstate.update(recv_q: q1)
+        %{mqsstate | recv_q: q1}
     end
         
-    defp dequeue(mqsstate = Exzmq.Socket[recv_q: q]) do
+    defp dequeue(mqsstate = %Exzmq.Socket{recv_q: q}) do
         #?DEBUG("TRANS: ~p, PENDING: ~p~n", [MqSState#ezmq_socket.transports, Q]),
         case transports_while(&do_dequeue/2, q, :empty, mqsstate) do
             {{transport, value}, q1} ->
-                mqsstate0 = mqsstate.update(recv_q: q1)
+                mqsstate0 = %{mqsstate | recv_q: q1}
                 mqsstate1 = Exzmq.Socket.Fsm.work({:dequeue, transport}, mqsstate0)
                 mqsstate2 = lb(transport, mqsstate1)
                 {{transport, value}, mqsstate2}
@@ -812,19 +797,19 @@ defmodule Exzmq do
     end
 
     defp do_setopts({:identity, id}, mqsstate) do
-        mqsstate.update(identity: iodata_to_binary(id))
+        %{mqsstate | identity: IO.iodata_to_binary(id)}
     end
 
     defp do_setopts({:active, :once}, mqsstate) do
-        run_recv_q(mqsstate.update(mode: :active_once))
+        run_recv_q(%{mqsstate | mode: :active_once})
     end
 
     defp do_setopts({:active, true}, mqsstate) do
-        run_recv_q(mqsstate.update(mode: :active))
+        run_recv_q(%{mqsstate | mode: :active})
     end
         
     defp do_setopts({:active, false}, mqsstate) do
-        mqsstate.update(mode: :passive)
+        %{mqsstate | mode: :passive}
     end
 
     defp do_setopts(_, mqsstate) do

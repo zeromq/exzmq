@@ -3,9 +3,7 @@
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
  defmodule Exzmq.Socket.Req do
 
-  defrecord State,  last_send: :none do
-    record_type last_send: pid|:none
-  end 
+  defstruct last_send: :none
 
   ###===================================================================
 
@@ -23,10 +21,10 @@
   ## @end
   ##--------------------------------------------------------------------
 
-  def init(_opts), do: {:ok, :idle, State.new}
+  def init(_opts), do: {:ok, :idle, %Exzmq.Socket.Req{}}
 
   def close(_state_name, _transport, mqsstate, state) do
-    state1 = state.update(last_send: :none)
+    state1 = %{state | last_send: :none}
     {:next_state, :idle, mqsstate, state1}
   end
 
@@ -38,11 +36,11 @@
     Exzmq.simple_decap_msg(msg)
   end
 
-  def idle(:check, {:send, _msg}, Exzmq.Socket[transports: []], _state) do
+  def idle(:check, {:send, _msg}, %Exzmq.Socket{transports: []}, _state) do
     {:queue, :block}
   end
 
-  def idle(:check, {:send, _msg}, Exzmq.Socket[transports: [head|_]], _state) do
+  def idle(:check, {:send, _msg}, %Exzmq.Socket{transports: [head|_]}, _state) do
     {:ok, head}
   end
 
@@ -55,7 +53,7 @@
   end
 
   def idle(:do, {:deliver_send, transport}, mqsstate, state) do
-    state1 = state.update(last_send: transport)
+    state1 = %{state | last_send: transport}
     mqsstate1 = Exzmq.lb(transport, mqsstate)
     {:next_state, :pending, mqsstate1, state1}
   end
@@ -68,11 +66,11 @@
     {:error, :fsm}
   end
 
-  def send_queued(:check, {:send, _msg}, Exzmq.Socket[transports: []], _state) do
+  def send_queued(:check, {:send, _msg}, %Exzmq.Socket{transports: []}, _state) do
     {:queue, :block}
   end
 
-  def send_queued(:check, :dequeue_send, Exzmq.Socket[transports: [head|_]], _state) do
+  def send_queued(:check, :dequeue_send, %Exzmq.Socket{transports: [head|_]}, _state) do
       {:ok, head}
   end
 
@@ -89,7 +87,7 @@
   end
 
   def send_queued(:do, {:deliver_send, transport}, mqsstate, state) do
-    state1 = state.update(last_send: transport)
+    state1 = %{state | last_send: transport}
     mqsstate1 = Exzmq.lb(transport, mqsstate)
     {:next_state, :pending, mqsstate1, state1}
   end
@@ -100,7 +98,7 @@
 
   def pending(:check, :recv, _mqsstate, _state), do: :ok
 
-  def pending(:check, {:deliver_recv, transport}, _mqsstate, State[last_send: transport2] )
+  def pending(:check, {:deliver_recv, transport}, _mqsstate, %Exzmq.Socket.Req{last_send: transport2} )
     when transport == transport2 do
      :ok
   end
@@ -117,9 +115,9 @@
     {:next_state, :reply, mqsstate, state}
   end
 
-  def pending(:do, {:deliver, transport}, mqsstate, state = State[last_send: transport2])
+  def pending(:do, {:deliver, transport}, mqsstate, state = %Exzmq.Socket.Req{last_send: transport2})
     when transport2 == transport do
-    state1 = state.update(last_send: :none)
+    state1 = %{state | last_send: :none}
     {:next_state, :idle, mqsstate, state1}
   end
 
@@ -138,7 +136,7 @@
   end
 
   def reply(:do, {:deliver, _transport}, mqsstate, state) do
-    state1 = state.update(last_send: :none)
+    state1 = %{state | last_send: :none}
     {:next_state, :idle, mqsstate, state1}
   end
 

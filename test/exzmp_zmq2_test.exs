@@ -32,8 +32,7 @@ defmodule Exzmq.ZMQ3Test do
   end
   
   def create_bound_pair_erlzmq(ctx, type1, id1, type2, id2, mode, transport, ip, port) do
-    
-  	active = true
+    active = true
 
     if mode == :passive do
       active = false
@@ -50,7 +49,6 @@ defmodule Exzmq.ZMQ3Test do
   def create_bound_pair_ezmq(ctx, type1, type2, mode, transport, ip, port) do
     create_bound_pair_ezmq(ctx, type1, [], type2, [], mode, transport, ip, port)
   end
-
   def create_bound_pair_ezmq(ctx, type1, id1, type2, id2, mode, transport, ip, port) do
     active = true
 
@@ -70,7 +68,6 @@ defmodule Exzmq.ZMQ3Test do
   def erlzmq_identity(socket, []) do
     :ok
   end
-
   def erlzmq_identity(socket, id) do
     :erlzmq.setsockopt(socket, :identity, id)
   end
@@ -345,7 +342,7 @@ defmodule Exzmq.ZMQ3Test do
 
     :ok
   end
-      
+
   def dealer_ping_pong_erlzmq({s1, s2}, msg, :passive) do
     :ok = :erlzmq.send(s1, <<>>, [:sndmore])
     :ok = :erlzmq.send(s1, msg)
@@ -365,7 +362,7 @@ defmodule Exzmq.ZMQ3Test do
     assert_mbox({:zmq, s2, msg, [:rcvmore]})
     assert_mbox({:zmq, s2, msg, []})
     assert_mbox_empty()
-  
+
     :ok = :erlzmq.send(s2, msg)
     assert_mbox({:zmq, s1, [msg]})
     assert_mbox_empty()
@@ -378,7 +375,7 @@ defmodule Exzmq.ZMQ3Test do
     assert_mbox({:zmq, s1, [msg]})
     :ok
   end
-    
+
   def dealer_ping_pong_ezmq({s1, s2}, msg, :passive) do
     :ok = Exzmq.send(s1, [msg])
     {:ok, msg} = :erlzmq.recv(s2)
@@ -413,7 +410,7 @@ defmodule Exzmq.ZMQ3Test do
 
     :ok
   end
-   
+
   def ping_pong_erlzmq_router({s1, s2}, msg, :passive) do
     :ok = :erlzmq.send(s1, msg)
     {:ok, {id, [msg]}} = Exzmq.recv(s2)
@@ -434,7 +431,7 @@ defmodule Exzmq.ZMQ3Test do
     assert_mbox({:zmq, s2, msg, [:rcvmore]})
     assert_mbox({:zmq, s2, msg, []})
     assert_mbox_empty()
-  
+
     :ok = :erlzmq.send(s2, id, [:sndmore])
     :ok = :erlzmq.send(s2, <<>>, [:sndmore])
     :ok = :erlzmq.send(s2, msg)
@@ -479,9 +476,9 @@ defmodule Exzmq.ZMQ3Test do
   def assert_mbox_empty() do
     receive do
       m -> assert false
-	  after
-	    0 -> :ok
-  	end
+    after
+      0 -> :ok
+    end
   end
 
   ## assert that top message in the queue is what we think it should be
@@ -493,14 +490,15 @@ defmodule Exzmq.ZMQ3Test do
     compiled_match_spec = :ets.match_spec_compile([match_spec])
     receive do
       m -> case :ets.match_spec_run([m], compiled_match_spec) do
-                [] -> assert false
-                [ret] -> ret
-           end
-      after
-       1000 ->
-           assert false
+        [] -> assert false
+        [ret] -> ret
+        end
+    after
+      1000 ->
+        assert false
     end
   end
 
   end
+
 end

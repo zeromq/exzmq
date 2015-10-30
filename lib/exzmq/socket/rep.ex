@@ -1,6 +1,7 @@
 ## This Source Code Form is subject to the terms of the Mozilla Public
 ## License, v. 2.0. If a copy of the MPL was not distributed with this
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 defmodule Exzmq.Socket.Rep do
 
   defstruct last_recv: :none, last_send: :none
@@ -37,72 +38,50 @@ defmodule Exzmq.Socket.Rep do
   end
 
   def idle(:check, :recv, _mqsstate, _state), do: :ok
-
   def idle(:check, {:deliver_recv, _transport}, _mqsstate, _dtate), do: :ok
-
   def idle(:check, :deliver, _mqsstate, _state), do: :ok
-
   def idle(:check, _, _mqsstate, _state), do: {:error, :fsm}
-
-
   def idle(:do, {:queue, _transport}, mqsstate, state) do
     {:next_state, :pending, mqsstate, state}
   end
-
   def idle(:do, {:dequeue, _transport}, mqsstate, state) do
     {:next_state, :pending, mqsstate, state}
   end
-
   def idle(:do, {:deliver, transport}, mqsstate, state) do
     state1 = %{state | last_recv: transport}
     {:next_state, :processing, mqsstate, state1}
   end
-
   def idle(:do, _, _mqsstate, _state) do
     {:error, :fsm}
   end
 
   def pending(:check, {:deliver_recv, _transport}, _mqsstate, _state), do: :ok
-
   def pending(:check, :recv, _mqsstate, _state), do: :ok
-
   def pending(:check, :deliver, _mqsstate, _state), do: :ok
-    
   def pending(:check, _, _mqsstate, _state), do: {:error, :fsm}
-
-
   def pending(:do, {:queue, _transport}, mqsstate, state) do
     {:next_state, :pending, mqsstate, state}
   end
-
   def pending(:do, {:dequeue, _transport}, mqsstate, state) do
     {:next_state, :pending, mqsstate, state}
   end
-
   def pending(:do, {:deliver, transport}, mqsstate, state) do
     state1 = %{state | last_recv: transport}
     {:next_state, :processing, mqsstate, state1}
   end
-
   def pending(:do, _, _mqsstate, _state), do: {:error, :fsm}
 
   def processing(:check, {:deliver_recv, _transport}, _mqsstate, _state), do: :ok
-
   def processing(:check, {:deliver, _transport}, _mqsstate, _state), do: :queue
-
   def processing(:check, {:send, _msg}, _mqsstate, %Exzmq.Socket.Rep{last_recv: transport}), do: {:ok, transport}
-
   def processing(:check, _, _mqsstate, _state), do: {:error, :fsm}
-
   def processing(:do, {:deliver_send, _transport}, mqsstate, state) do
     state1 = %{state | last_recv: :none}
     {:next_state, :idle, mqsstate, state1}
   end
-
   def processing(:do, {:queue, _transport}, mqsstate, state) do
     {:next_state, :processing, mqsstate, state}
   end
-
   def processing(:do, _, _mqsstate, _state) do
     {:error, :fsm}
   end

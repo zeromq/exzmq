@@ -1,11 +1,11 @@
 ## This Source Code Form is subject to the terms of the Mozilla Public
 ## License, v. 2.0. If a copy of the MPL was not distributed with this
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 defmodule Exzmq.Link.Sup do
   use Supervisor
 
   def start_link do
-
     :supervisor.start_link({:local, __MODULE__}, __MODULE__, [])
   end
 
@@ -23,8 +23,9 @@ defmodule Exzmq.Link.Sup do
       worker(Exzmq.Link, [], [restart: :temporary, shutdown: :brutal_kill])
     ]
 
-    # See http://elixir-lang.org/docs/stable/Supervisor.Behaviour.html
+    # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
     supervise(children, [strategy: :simple_one_for_one, max_restarts: 0, max_seconds: 1])
   end
+
 end

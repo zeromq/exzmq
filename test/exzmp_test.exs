@@ -154,7 +154,7 @@ defmodule ExzmqTest do
 
     ## send a message for each client Socket and expect a result on each socket
     Enum.each(s2, fn(_s) -> :ok = Exzmq.send(s1, [msg]) end)
-    Enum.each(s2, fn(s) -> {:ok, [msg]} = Exzmq.recv(s) end)
+    Enum.each(s2, fn(s) -> {:ok, [^msg]} = Exzmq.recv(s) end)
 
     :ok = Exzmq.close(s1)
     Enum.each(s2, fn(s) -> :ok = Exzmq.close(s) end)
@@ -166,7 +166,7 @@ defmodule ExzmqTest do
 
     ## send a message for each client Socket and expect a result on each socket
     Enum.each(s2, fn(_s) -> :ok = Exzmq.send(s1, [msg]) end)
-    Enum.each(s2, fn(s) -> {:ok, [msg]} = Exzmq.recv(s) end)
+    Enum.each(s2, fn(s) -> {:ok, [^msg]} = Exzmq.recv(s) end)
 
     :ok = Exzmq.close(s1)
     Enum.each(s2, fn(s) -> :ok = Exzmq.close(s) end)
@@ -178,7 +178,7 @@ defmodule ExzmqTest do
 
     ## send a message for each client Socket and expect a result on each socket
     Enum.each(s2, fn(s) -> :ok = Exzmq.send(s, [msg]) end)
-    Enum.each(s2, fn(_s) -> {:ok, [msg]} = Exzmq.recv(s1) end)
+    Enum.each(s2, fn(_s) -> {:ok, [^msg]} = Exzmq.recv(s1) end)
 
     :ok = Exzmq.close(s1)
     Enum.each(s2, fn(s) -> :ok = Exzmq.close(s) end)
@@ -200,10 +200,10 @@ defmodule ExzmqTest do
     ## send a message for each client Socket and expect a result on each socket
     Enum.each(s2, fn(s) -> :ok = Exzmq.send(s, [msg]) end)
     Enum.each(s2, fn(_s) ->
-      {:ok, {id, [msg]}} = Exzmq.recv(s1)
+      {:ok, {id, [^msg]}} = Exzmq.recv(s1)
       :ok = Exzmq.send(s1, {id, [msg]})
       end)
-    Enum.each(s2, fn(s) -> {:ok, msg} = Exzmq.recv(s) end)
+    Enum.each(s2, fn(s) -> {:ok, _msg} = Exzmq.recv(s) end)
     :ok = Exzmq.close(s1)
     Enum.each(s2, fn(s) -> :ok = Exzmq.close(s) end)
   end
@@ -222,7 +222,7 @@ defmodule ExzmqTest do
       {:ok, [msg]} = Exzmq.recv(s1)
       :ok = Exzmq.send(s1, [msg])
       end)
-    Enum.each(s2, fn(s) -> {:ok, [msg]} = Exzmq.recv(s) end)
+    Enum.each(s2, fn(s) -> {:ok, [^msg]} = Exzmq.recv(s) end)
     :ok = Exzmq.close(s1)
     Enum.each(s2, fn(s) -> :ok = Exzmq.close(s) end)
   end
@@ -238,7 +238,7 @@ defmodule ExzmqTest do
     ## receive a message for each client and expect a result on each socket
     {:error, :fsm} = Exzmq.recv(s1)
     :ok = Exzmq.send(s1, [msg])
-    Enum.each(s2, fn(s) -> {:ok, [msg]} = Exzmq.recv(s) end)
+    Enum.each(s2, fn(s) -> {:ok, [^msg]} = Exzmq.recv(s) end)
     :ok = Exzmq.close(s1)
     Enum.each(s2, fn(s) -> :ok = Exzmq.close(s) end)
   end

@@ -6,7 +6,6 @@ defmodule Exzmq.Supervisor do
   use Supervisor
 
   def start_link() do
-    IO.puts "supervisor start_link "
     :supervisor.start_link({:local, __MODULE__}, __MODULE__, [])
   end
 

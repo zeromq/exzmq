@@ -1,15 +1,15 @@
-exzmq - ØMQ in pure Elixir
-============================
+# exzmq - ZeroMQ in pure Elixir
+
+exzmq implements the ZeroMQ protocol in 100% pure Elixir.
+
+Based on the original work from ezmq(https://github.com/zeromq/ezmq)
+
+[![Build Status](https://travis-ci.org/zeromq/exzmq.svg?branch=master)](https://travis-ci.org/zeromq/exzmq)
 
 
-exzmq implements the ØMQ protocol in 100% pure Elixir.
+## Motivation
 
-Base on the original work from ezmq(https://github.com/zeromq/ezmq)
-
-Motivation
-----------
-
-ØMQ is like Erlang message passing for the rest of the world without the
+ZeroMQ is like Erlang message passing for the rest of the world without the
 overhead of a C-Node. So using it to talk to rest of the World seems like
 a good idea. Several Erlang wrappers for the C++ reference implemention do
 exist. So why reinvent the wheel in Elixir?
@@ -22,10 +22,9 @@ encountered several segfault taking down the entire Erlang VM and most
 importantly, the whole concept is so erlangish, that it feels like it has
 to be implemented in Elixir itself.
 
-Main features
--------------
+## Main features
 
-* ØMQ compatible : ZMTP 1.0 (http://rfc.zeromq.org/spec:13)
+* ZeroMQ compatible : ZMTP 1.0 (http://rfc.zeromq.org/spec:13)
 * 100% Elixir
 * good fault isolation (a crash in the message decoder won't take down
   your Erlang VM)
@@ -33,8 +32,7 @@ Main features
 * runs on non SMP and SMP VM
 
 
-Examples
---------
+## Examples
 
 ```elixir
 defmodule Exzmq.Examples.HWserver do
@@ -74,13 +72,12 @@ defmodule Exzmq.Examples.HWclient do
 end	
 ```
 
-Contribution process
---------------------
+## Contribution process
 
 * ZeroMQ [RFC 22 C4.1](http://rfc.zeromq.org/spec:22)
 
-TODO:
------
+## TODO:
+
 * ZMTP 2.0
 * documentation
 * push/pull sockets
@@ -88,8 +85,7 @@ TODO:
 * send queue improvements
 * high water marks for send queue
 
-License
--------
+## License
 
 The project is released under the MPL 2.0 license
 http://mozilla.org/MPL/2.0/.

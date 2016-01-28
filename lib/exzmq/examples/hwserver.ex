@@ -10,7 +10,7 @@ defmodule Exzmq.Examples.HWserver do
     Exzmq.bind(socket, :tcp, port, [])
     loop(socket)
   end
-  
+
   def loop(socket) do
     Exzmq.recv(socket)
     :io.format("Received Hello~n")

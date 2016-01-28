@@ -19,6 +19,8 @@ defmodule Exzmq.Tcp.Socket do
   #todo todo ifdef
   @server_opts {}
 
+  alias Exzmq.Link
+
   ##===================================================================
   ## External functions
   ##===================================================================
@@ -37,9 +39,9 @@ defmodule Exzmq.Tcp.Socket do
   end
 
   def handle_accept(sock, state = {mqsocket, identity}) do
-    case Exzmq.Link.start_connection() do
+    case Link.start_connection() do
       {:ok, pid} ->
-        Exzmq.Link.accept(mqsocket, identity, pid, sock)
+        Link.accept(mqsocket, identity, pid, sock)
       _ ->
         :error_logger.error_report([{:event, :accept_failed}])
         :gen_tcp.close(Sock)

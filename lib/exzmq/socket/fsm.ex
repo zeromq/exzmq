@@ -71,5 +71,5 @@ defmodule Exzmq.Socket.Fsm do
     %FsmState{module: module, state_name: state_name, state: state} = fsm
     module.decap_msg(transport, id_msg, state_name, mqsstate, state)
   end
-  
+
 end

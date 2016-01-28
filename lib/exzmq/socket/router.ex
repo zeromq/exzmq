@@ -3,7 +3,7 @@
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 defmodule Exzmq.Socket.Router do
-    
+
   ##===================================================================
   ## API
   ##===================================================================
@@ -33,7 +33,7 @@ defmodule Exzmq.Socket.Router do
   def encap_msg({_transport, {_identity,msg}}, _state_name, _mqsstate, _state) do
     Exzmq.simple_encap_msg(msg)
   end
-  
+
   def decap_msg(_transport, {remoteId, msg}, _stateName, _mqsstate, _state) do
     {remoteId, Exzmq.simple_decap_msg(msg)}
   end

@@ -20,3 +20,4 @@ defmodule Exzmq.Socket do
             remote_ids: :orddict.new()
 
 end
+

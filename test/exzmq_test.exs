@@ -6,25 +6,25 @@ defmodule ExzmqTest do
   use ExUnit.Case, async: false
   
   test "open a req socket, bind and close" do
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :req}, {:active, false}])
     assert Exzmq.bind(s, :tcp, 5555, []) == :ok
     assert Exzmq.close(s) == :ok
   end
 
   test "open a req socket, connect and close" do 
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :req}, {:active, false}])
     assert Exzmq.connect(s, :tcp, {127,0,0,1}, 5556, []) == :ok
     assert Exzmq.close(s) == :ok
   end
   
   test "open a req socket and connect with a wrong address" do
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :req}, {:active, false}])
     assert Exzmq.connect(s, :tcp, "undefined.undefined", 5557, []) == {:error,:einval} 
     assert Exzmq.close(s) == :ok
   end
 
   test "open req socket and wait connecting timeout" do
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :req}, {:active, false}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5558, [{:timeout, 1000}])
     :timer.sleep(2000)
     assert Exzmq.close(s) == :ok
@@ -37,26 +37,26 @@ defmodule ExzmqTest do
       :timer.sleep(15000) ## keep socket alive for at least 10sec...
       :gen_tcp.close(s1)  
       end)
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :req}, {:active, false}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5559, [{:timeout, 1000}])
     :timer.sleep(15000) ## wait for the connection setup timeout
     Exzmq.close(s)
   end
 
   test "open a dealer socket, bind and close" do
-    {:ok, s} = Exzmq.socket([{:type, :dealer}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :dealer}, {:active, false}])
     :ok = Exzmq.bind(s, :tcp, 5560, [])
     Exzmq.close(s)
   end
 
   test "open a dealer socket, connect and close" do
-    {:ok, s} = Exzmq.socket([{:type, :dealer}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :dealer}, {:active, false}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5561, [])
     Exzmq.close(s)
   end
 
   test "open dealer socket and wait connecting timeout" do
-    {:ok, s} = Exzmq.socket([{:type, :dealer}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :dealer}, {:active, false}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5562, [{:timeout, 1000}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5562, [{:timeout, 1000}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5562, [{:timeout, 1000}])
@@ -72,7 +72,7 @@ defmodule ExzmqTest do
       :timer.sleep(15000) ## keep socket alive for at least 10sec...
       :gen_tcp.close(s1)
       end)
-    {:ok, s} = Exzmq.socket([{:type, :dealer}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :dealer}, {:active, false}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5563, [{:timeout, 1000}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5563, [{:timeout, 1000}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5563, [{:timeout, 1000}])
@@ -92,7 +92,7 @@ defmodule ExzmqTest do
       :gen_tcp.close(s1)
       send(self, :done)
       end)
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :req}, {:active, false}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5564, [{:timeout, 1000}])
     assert_receive :done, 1000
     Exzmq.close(s)
@@ -100,7 +100,7 @@ defmodule ExzmqTest do
 
   test "open rep socket and send trash" do
     self = self()
-    {:ok, s} = Exzmq.socket([{:type, :rep}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :rep}, {:active, false}])
     :ok = Exzmq.bind(s, :tcp, 5565, [])
     spawn(fn() ->
       {:ok, l} = :gen_tcp.connect({127,0,0,1},5565,[{:active, false}, {:packet, :raw}])
@@ -115,7 +115,7 @@ defmodule ExzmqTest do
   end
 
   test "open a rep socket and wait time out" do
-    {:ok, s} = Exzmq.socket([{:type, :rep}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :rep}, {:active, false}])
     :ok = Exzmq.bind(s, :tcp, 5566, [])
     spawn(fn() ->
       {:ok, l} = :gen_tcp.connect({127,0,0,1},5566,[{:active, false}, {:packet, :raw}])
@@ -131,7 +131,7 @@ defmodule ExzmqTest do
   end
 
   def create_multi_connect(type, active, ip, port, cnt, acc) do
-    {:ok, s2} = Exzmq.socket([{:type, type}, {:active, active}])
+    {:ok, s2} = Exzmq.start([{:type, type}, {:active, active}])
     :ok = Exzmq.connect(s2, :tcp, ip, port, [])
     create_multi_connect(type, active, ip, port, cnt - 1, [s2|acc])
   end
@@ -141,7 +141,7 @@ defmodule ExzmqTest do
       :active -> true
       :passive -> false
     end
-    {:ok, s1} = Exzmq.socket([{:type, type1}, {:active, active}])
+    {:ok, s1} = Exzmq.start([{:type, type1}, {:active, active}])
     :ok = Exzmq.bind(s1, :tcp, port, [])
     s2 = create_multi_connect(type2, active, ip, port, cnt2, [])
     :timer.sleep(10) ## give it a moment to establish all sockets....
@@ -254,7 +254,7 @@ defmodule ExzmqTest do
   def shutdown_stress_loop(0), do: :ok
 
   def shutdown_stress_loop(n) do
-    {:ok, s1} = Exzmq.socket([{:type, :rep}, {:active, false}])
+    {:ok, s1} = Exzmq.start([{:type, :rep}, {:active, false}])
     :ok = Exzmq.bind(s1, :tcp, 5558 + n, [])
     shutdown_stress_worker_loop(n, 100)
     :ok = join_procs(100)
@@ -263,7 +263,7 @@ defmodule ExzmqTest do
   end
 
   test "shutdown no blocking test" do
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :req}, {:active, false}])
     Exzmq.close(s)
   end
 
@@ -289,7 +289,7 @@ defmodule ExzmqTest do
   end
 
   def worker(pid, port) do
-    {:ok, s} = Exzmq.socket([{:type, :rep}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :rep}, {:active, false}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, port, [])
     :ok = Exzmq.close(s)
     send pid, :proc_end
@@ -316,7 +316,7 @@ defmodule ExzmqTest do
       :gen_tcp.close(s1)
       send self, :done
       end)
-    {:ok, s} = Exzmq.socket([{:type, :req}, {:active, false}])
+    {:ok, s} = Exzmq.start([{:type, :req}, {:active, false}])
     :ok = Exzmq.connect(s, :tcp, {127,0,0,1}, 5562, [{:timeout, 1000}])
     assert_receive :connected, 1000
     :ok = Exzmq.send(s, [<<"ZZZ">>])

@@ -78,18 +78,14 @@ defmodule Exzmq.Frame do
     encode(IO.iodata_to_binary(frame), flags, rest, acc)
   end
   def encode(frame, flags, rest, acc) when is_binary(frame) do
-    length = byte_size(frame) + 1
-    header = if length >= 255 do
-      <<0xff, length::size(64)>>
+    frame_length = byte_size(frame) + 1
+    header = if frame_length >= 255 do
+      <<0xff, frame_length::size(64)>>
     else
-      <<length::size(8)>>
+      <<frame_length::size(8)>>
     end
-    flags1 = if length(rest) !== 0 do
-      bor(flags, @flag_more)
-    else
-      flags
-    end
-    encode(rest, [<<header::binary, flags1::size(8), frame::binary>>|acc])
+    if length(rest) !== 0, do: flags = bor(flags, @flag_more)
+    encode(rest, [<<header::binary, flags::size(8), frame::binary>>|acc])
   end
 
 end

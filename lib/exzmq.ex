@@ -747,9 +747,10 @@ defmodule Exzmq do
     case :orddict.find(transport, q) do
       {:ok, v} ->
         {{:value, value}, v1} = :queue.out(v)
-        q1 = case :queue.is_empty(v1) do
-          true -> :orddict.erase(transport, q)
-          false -> :orddict.store(transport, v1, q)
+        q1 = if :queue.is_empty(v1) do
+          :orddict.erase(transport, q)
+        else
+          :orddict.store(transport, v1, q)
         end
         {{transport, value}, q1}
       _ ->

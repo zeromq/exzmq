@@ -21,7 +21,7 @@ defmodule Exzmq.Link do
 
   def start_link do
     :gen_fsm.start_link(__MODULE__, [], [@fsm_opts])
-  end 
+  end
 
   def start_connection do
     Exzmq.Link.Sup.start_connection()
@@ -39,7 +39,7 @@ defmodule Exzmq.Link do
   def send(server, msg) do
     :gen_fsm.send_event(server, {:send, msg})
   end
- 
+
   def close(server) do
     :gen_fsm.sync_send_all_state_event(server, :close)
   end
@@ -56,7 +56,7 @@ defmodule Exzmq.Link do
   end
   def setup({:connect, mqsocket, identity, :tcp, address, port, tcpopts, timeout}, state) do
     case :gen_tcp.connect(address, port, tcpopts, timeout) do
-      {:ok, socket} -> 
+      {:ok, socket} ->
         newstate = %{state | mqsocket: mqsocket, identity: identity, socket: socket}
         :ok = :inet.setopts(socket, [{:active,:once}])
         {:next_state, :connecting, newstate, @connect_timeout}
@@ -107,7 +107,7 @@ defmodule Exzmq.Link do
   def handle_event(_event, state_name, state) do
     {:next_state, state_name, state}
   end
-  
+
   def handle_sync_event(:close, _from, _state_name, state) do
     {:stop, :normal, :ok, state}
   end
@@ -149,7 +149,7 @@ defmodule Exzmq.Link do
         handle_data_reply(reply)
     end
   end
-  def handle_data(state_name, %State{socket: socket, version: ver, pending: pending} = state, 
+  def handle_data(state_name, %State{socket: socket, version: ver, pending: pending} = state,
                    process_state_next) do
     {msg, data_rest} = Exzmq.Frame.decode(ver, pending)
     state1 = %{state | pending: data_rest}
@@ -158,7 +158,7 @@ defmodule Exzmq.Link do
         :ok = :inet.setopts(socket,[{:active, :once}])
         put_elem(process_state_next, 2, state1)
       :invalid ->
-        {:stop, :normal, state1}   
+        {:stop, :normal, state1}
       {true, frame} ->
         state2 = %{state1 | frames: [frame|state1.frames]}
         handle_data(state_name, state2, put_elem(process_state_next, 2, state2))

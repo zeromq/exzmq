@@ -3,7 +3,7 @@
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 defmodule Exzmq do
-  use GenServer 
+  use GenServer
   @server_opts {}
 
   alias Exzmq.Socket
@@ -60,7 +60,7 @@ defmodule Exzmq do
   Exzmq.connect(socket, :tcp, {127,0,0,1}, 5555, [])
   """
   #todo macro port?
-  def connect(socket, :tcp, address, port, opts) do 
+  def connect(socket, :tcp, address, port, opts) do
     valid = validate_address(address)
     case valid do
       {:ok, _} -> :gen_server.call(socket, {:connect, :tcp, address, port, opts})
@@ -112,7 +112,7 @@ defmodule Exzmq do
   def recv(socket, timeout) do
     :gen_server.call(socket, {:recv, timeout}, :infinity)
   end
-    
+
   @doc ~S"""
   set ZMQ socket options
   """
@@ -152,7 +152,7 @@ defmodule Exzmq do
     %{mqsstate | transports: trans1}
   end
 
-  defp validate_address(address) when is_binary(address) do 
+  defp validate_address(address) when is_binary(address) do
     :inet.gethostbyname(address)
   end
 
@@ -199,7 +199,7 @@ defmodule Exzmq do
   def remote_id_del(transport, mqsstate = %Socket{remote_ids: rem_ids}) when is_pid(transport) do
     %{mqsstate | remote_ids: :orddict.filter(fn(_key, value) -> value != transport end, rem_ids)}
   end
-    
+
   def remote_id_del(remote_id, mqsstate = %Socket{remote_ids: rem_ids}) do
     %{mqsstate | remote_ids: :orddict.erase(remote_id, rem_ids)}
   end
@@ -226,7 +226,7 @@ defmodule Exzmq do
     transports != []
   end
 
-  @doc """ 
+  @doc """
   walk the list of transports
   - this is intended to hide the details of the transports impl.
   """
@@ -413,9 +413,9 @@ defmodule Exzmq do
   def handle_cast({:deliver_connect, transport, reply}, state = %Socket{connecting: connecting}) do
     case reply do
       # transient errors
-      {:error, reason} when reason == :eagain or 
+      {:error, reason} when reason == :eagain or
                             reason == :ealready or
-                            reason == :econnrefused or 
+                            reason == :econnrefused or
                             reason == :econnreset ->
         connect_args = :orddict.fetch(transport, connecting)
         #?DEBUG("CArgs: ~w~n", [ConnectArgs]),
@@ -490,7 +490,7 @@ defmodule Exzmq do
   def handle_info(_info, state) do
     {:noreply, state}
   end
-    
+
   @doc """
   --------------------------------------------------------------------
   @private
@@ -591,7 +591,7 @@ defmodule Exzmq do
       :ok -> queue_run_2(state);
       _ -> state
     end
-  end 
+  end
 
   defp queue_run_2(%Socket{mode: mode} = state) when mode == :active or mode == :active_once do
     run_recv_q(state)
@@ -612,7 +612,7 @@ defmodule Exzmq do
     end
   end
 
-  defp cond_cancel_timer(:none) do 
+  defp cond_cancel_timer(:none) do
     :ok
   end
   defp cond_cancel_timer(ref) do
@@ -701,10 +701,10 @@ defmodule Exzmq do
   end
   def simple_decap_msg(msg) when is_list(msg) do
     :lists.reverse(:lists.foldl(fn({:normal, m}, acc) -> [m|acc]
-                                                 (_, acc) -> acc 
+                                                 (_, acc) -> acc
                                     end, [], msg))
   end
-                           
+
   defp ezmq_link_send({transports, msg}, state) when is_list(transports) do
     :lists.foreach(fn(t) ->
       msg1 = Exzmq.Socket.Fsm.encap_msg({t, msg}, state)
@@ -729,7 +729,7 @@ defmodule Exzmq do
     q1 = :orddict.erase(transport, q)
     %{mqsstate | recv_q: q1}
   end
-        
+
   defp dequeue(mqsstate = %Socket{recv_q: q}) do
     #?DEBUG("TRANS: ~p, PENDING: ~p~n", [MqSState#ezmq_socket.transports, Q]),
     case transports_while(&do_dequeue/2, q, :empty, mqsstate) do

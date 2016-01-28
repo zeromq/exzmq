@@ -1,4 +1,4 @@
-defmodule Exzmp.Mixfile do
+defmodule Exzmq.Mixfile do
   use Mix.Project
 
   def project do

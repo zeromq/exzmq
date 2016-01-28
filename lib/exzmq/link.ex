@@ -17,14 +17,16 @@ defmodule Exzmq.Link do
              {:packet, :raw},
              {:reuseaddr, true}]
 
+  alias Exzmq.Frame
   alias Exzmq.Link.State
+  alias Exzmq.Link.Sup
 
   def start_link do
     :gen_fsm.start_link(__MODULE__, [], [@fsm_opts])
   end
 
   def start_connection do
-    Exzmq.Link.Sup.start_connection()
+    Sup.start_connection()
   end
 
   def accept(mqsocket, identity, server, socket) do
@@ -51,7 +53,7 @@ defmodule Exzmq.Link do
 
   def setup({:accept, mqsocket, identity, socket}, state) do
     newstate = %{state | mqsocket: mqsocket, identity: identity, socket: socket}
-    packet = Exzmq.Frame.encode_greeting(state.version, nil, identity)
+    packet = Frame.encode_greeting(state.version, nil, identity)
     send_packet(packet, {:next_state, :open, newstate, @connect_timeout})
   end
   def setup({:connect, mqsocket, identity, :tcp, address, port, tcpopts, timeout}, state) do
@@ -73,7 +75,7 @@ defmodule Exzmq.Link do
   def connecting({:greeting, ver, _socket_type, remote_id0}, %State{mqsocket: mqsocket, identity: identity} = state) do
     remoteid = Exzmq.remote_id_assign(remote_id0)
     Exzmq.deliver_connect(mqsocket, {:ok, remoteid})
-    packet = Exzmq.Frame.encode_greeting(state.version, :undefined, identity)
+    packet = Frame.encode_greeting(state.version, :undefined, identity)
     send_packet(packet, {:next_state, :connected, %{state | remote_id: remoteid, version: ver}})
   end
   def connecting(_msg, %State{mqsocket: mqsocket} = state) do
@@ -134,7 +136,7 @@ defmodule Exzmq.Link do
   end
   def handle_data(state_name, %State{socket: socket, pending: pending} = state, process_state_next)
     when state_name === :connecting or state_name === :open do
-    {msg, data_rest} = Exzmq.Frame.decode_greeting(pending)
+    {msg, data_rest} = Frame.decode_greeting(pending)
     state1 = %{state | pending: data_rest}
     case msg do
       :more ->
@@ -151,7 +153,7 @@ defmodule Exzmq.Link do
   end
   def handle_data(state_name, %State{socket: socket, version: ver, pending: pending} = state,
                    process_state_next) do
-    {msg, data_rest} = Exzmq.Frame.decode(ver, pending)
+    {msg, data_rest} = Frame.decode(ver, pending)
     state1 = %{state | pending: data_rest}
     case msg do
       :more ->
@@ -196,7 +198,7 @@ defmodule Exzmq.Link do
   end
 
   def send_frames(frames, next_state_info) do
-    packet = Exzmq.Frame.encode(frames)
+    packet = Frame.encode(frames)
     send_packet(packet, next_state_info)
   end
 

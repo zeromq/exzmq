@@ -30,18 +30,6 @@ defmodule Exzmq do
   end
 
   @doc ~S"""
-  Create a zeromq socket
-
-  ## Example
-
-  { :ok, socket } = Exzmq.socket([{:type, :req}])
-  Exzmq.connect(socket, :tcp, {127,0,0,1}, 5555, [])
-  """
-  def socket(opts) when is_list(opts) do
-    start(opts)
-  end
-
-  @doc ~S"""
   Accept connections on a socket
 
   ## Example

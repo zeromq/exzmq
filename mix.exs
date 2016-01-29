@@ -1,50 +1,46 @@
+## This Source Code Form is subject to the terms of the Mozilla Public
+## License, v. 2.0. If a copy of the MPL was not distributed with this
+## file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 defmodule Exzmq.Mixfile do
   use Mix.Project
 
+  @version "0.1.0"
+
   def project do
-    [ app: :exzmq,
-      version: "0.13.0",
-      elixir: "~> 1.1",
+    [
+      app: :exzmq,
+      version: @version,
+      elixir: ">= 1.1.0",
       name: "Exzmq",
-      source_url: "https://github.com/zeromq/exzmq",
-      deps: deps ]
+      package: package,
+      build_embedded: Mix.env == :prod,
+      start_permanent: Mix.env == :prod,
+      deps: [
+        {:credo, "~> 0.2", only: [:dev, :test]}
+      ],
+      docs: [
+        main: "Exzmq",
+        source_ref: "v#{@version}",
+        source_url: "https://github.com/zeromq/exzmq"
+      ],
+    ]
   end
 
-  if System.get_env("ZMQ_TEST_SUITE") == "true" do
-    # Configuration for the OTP application
-    def application do
-      [
-        mod: { Exzmq.App, [] },
-        applications: [:logger, :gen_listener_tcp, :erlzmq]
-      ]
-    end
-  else
-    # Configuration for the OTP application
-    def application do
-      [
-        mod: { Exzmq.App, [] },
-        applications: [:logger, :gen_listener_tcp]
-      ]
-    end
+  def application do
+    [applications: []]
   end
 
-  # Returns the list of dependencies in the format:
-  # { :foobar, git: "https://github.com/elixir-lang/foobar.git", tag: "0.1" }
-  #
-  # To specify particular versions, regardless of the tag, do:
-  # { :barbat, "~> 0.1", github: "elixir-lang/barbat" }
-  if System.get_env("ZMQ_TEST_SUITE") == "true" do
-    defp deps do
-      [
-        {:gen_listener_tcp, github: "kaos/gen_listener_tcp"},
-        {:erlzmq, github: "zeromq/erlzmq2", tag: "2.1.11"}
-      ]
-    end
-  else
-    defp deps do
-      [
-        {:gen_listener_tcp, github: "kaos/gen_listener_tcp"}
-      ]
-    end
+  defp package do
+    %{
+      maintainers: [
+        "Constantin Rack"
+        ],
+      licenses: ["Mozilla Public License 2.0"],
+      links: %{
+        "GitHub" => "https://github.com/zeromq/exzmq"
+      }
+    }
   end
+
 end

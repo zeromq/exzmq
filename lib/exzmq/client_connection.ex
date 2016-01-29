@@ -2,8 +2,13 @@
 ## License, v. 2.0. If a copy of the MPL was not distributed with this
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-defmodule Exzmq.Socket.FsmState do
+defmodule Exzmq.ClientConnection do
 
-  defstruct module: nil, state_name: nil, state: nil
+  @moduledoc """
+  This module represents a client connection.
+  It is a connection accepted by :gen_tcp.accept.
+  """
 
+  defstruct socket: nil 
+ 	
 end

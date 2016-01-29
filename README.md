@@ -1,89 +1,46 @@
-# exzmq - ZeroMQ in pure Elixir
+# exzmq
 
-exzmq implements the ZeroMQ protocol in 100% pure Elixir.
-
-Based on the original work from ezmq(https://github.com/zeromq/ezmq)
+ZeroMQ 3.1 for Elixir
 
 [![Build Status](https://travis-ci.org/zeromq/exzmq.svg?branch=master)](https://travis-ci.org/zeromq/exzmq)
 
+## Status
 
-## Motivation
-
-ZeroMQ is like Erlang message passing for the rest of the world without the
-overhead of a C-Node. So using it to talk to rest of the World seems like
-a good idea. Several Erlang wrappers for the C++ reference implemention do
-exist. So why reinvent the wheel in Elixir?
-
-Elixir is the way forward for the beam community, it feel like the good time to have
-an implementation of zeromq.
-
-Secondly, when using the C++ implementation we
-encountered several segfault taking down the entire Erlang VM and most
-importantly, the whole concept is so erlangish, that it feels like it has
-to be implemented in Elixir itself.
-
-## Main features
-
-* ZeroMQ compatible : ZMTP 1.0 (http://rfc.zeromq.org/spec:13)
-* 100% Elixir
-* good fault isolation (a crash in the message decoder won't take down
-  your Erlang VM)
-* API very similar to other socket interfaces
-* runs on non SMP and SMP VM
-
+* This project is a work in progress.
+* It is not ready for production use yet.
+* Contributions are welcome
 
 ## Examples
 
 ```elixir
-defmodule Exzmq.Examples.HWserver do
+defmodule ServerExample do
 
-  def main() do
-    {:ok, socket} = Exzmq.start([{:type, :rep}])
-    Exzmq.bind(socket, :tcp, 5555, [])
-    loop(socket)
+  def main do
+    {:ok, socket} = Exzmq.server("tcp://127.0.0.1:5555")
+    socket |> receive
   end
   
-  defp loop(socket) do
-    Exzmq.recv(socket)
-    :io.format("Received Hello~n")
-    Exzmq.send(socket, [<<"World">>])
-    loop(socket)
+  defp receive(socket) do
+    message = socket |> Exzmq.recv
+    IO.puts "Received: #{inspect message}"
+    socket |> receive
   end
+
 end
 
+defmodule ClientExample do
 
-defmodule Exzmq.Examples.HWclient do
-
-  def main() do
-    {:ok, socket} = Exzmq.start([{:type, :req}])
-    Exzmq.connect(socket, :tcp, {127,0,0,1}, 5555, [])
-    loop(socket, 0)
+  def main do
+    {:ok, socket} = Exzmq.client("tcp://127.0.0.1:5555")
+    socket |> Exzmq.send("Hello")
   end
 
-  defp loop(_socket, 10), do: :ok
-
-  defp loop(socket, n) do
-	 :io.format("Sending Hello ~w ...~n",[n])
-	 Exzmq.send(socket, [<<"Hello",0>>])
-	 {:ok, r} = Exzmq.recv(socket)
-     :io.format("Received '~s' ~w~n", [r, n])
-	 loop(socket, n+1)
-  end
 end	
 ```
 
-## Contribution process
+## Contribution
 
-* ZeroMQ [RFC 22 C4.1](http://rfc.zeromq.org/spec:22)
-
-## TODO:
-
-* ZMTP 2.0
-* documentation
-* push/pull sockets
-* identity support
-* send queue improvements
-* high water marks for send queue
+This projects uses the [C4.1 process](http://rfc.zeromq.org/spec:22).
 
 ## License
 

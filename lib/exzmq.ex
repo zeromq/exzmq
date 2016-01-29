@@ -3,8 +3,10 @@
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 defmodule Exzmq do
+
   use GenServer
-  @server_opts {}
+
+  alias Exzmq.Address
 
   alias Exzmq.Cargs
   alias Exzmq.Link
@@ -12,64 +14,93 @@ defmodule Exzmq do
   alias Exzmq.Socket.Fsm
   alias Exzmq.Tcp
 
-  def start_link(opts) when is_list(opts) do
-    :gen_server.start_link(__MODULE__, {self(), opts}, [@server_opts])
-  end
 
   @doc ~S"""
-  Create a zeromq socket
+  Create a new CLIENT socket
 
   ## Example
 
-  { :ok, socket } = Exzmq.start([{:type, :req}])
-  Exzmq.connect(socket, :tcp, {127,0,0,1}, 5555, [])
+  {:ok, socket} = Exzmq.client
   """
-  def start(opts) when is_list(opts) do
-    :gen_server.start(__MODULE__, {self(), opts}, [@server_opts])
+  def client do
+    GenServer.start_link(__MODULE__, %Exzmq.Socket{type: :client})
   end
 
-  def socket_link(opts) when is_list(opts) do
-    start_link(opts)
-  end
 
   @doc ~S"""
-  Accept connections on a socket
+  Create a new SERVER socket
 
   ## Example
 
-  {:ok, socket} = Exzmq.start([{:type, :rep}])
-  Exzmq.bind(socket, :tcp, port, []))
+  {:ok, socket} = Exzmq.server
   """
-  # todo create macro when port?(port)
-  def bind(socket, :tcp, port, opts)  do
-    valid = case Dict.get(opts, :ip) do
-      nil -> {:ok, nil};
-      address -> validate_address(address)
-    end
-
-    #TODO: socket options
-    case valid do
-      {:ok, _} -> :gen_server.call(socket, {:bind, :tcp, port, opts});
-      res -> res
-    end
+  def server do
+    GenServer.start_link(__MODULE__, %Exzmq.Socket{type: :server})
   end
 
+  def init(state) do
+    {:ok, state}
+  end
+
+
   @doc ~S"""
-  Connect a socket
+  Accept connections on a SERVER socket
 
   ## Example
 
-  {:ok, socket} = Exzmq.start([{:type, :req}])
-  Exzmq.connect(socket, :tcp, {127,0,0,1}, 5555, [])
+  {:ok, server} = Exzmq.server
+  Exzmq.bind(server, "tcp://127.0.0.1:5555")
   """
-  #todo macro port?
-  def connect(socket, :tcp, address, port, opts) do
-    valid = validate_address(address)
-    case valid do
-      {:ok, _} -> :gen_server.call(socket, {:connect, :tcp, address, port, opts})
-      res -> res
+  def bind(socket, address)  do
+    socket |> GenServer.call({:bind, address |> Address.parse})
+  end
+
+
+  @doc ~S"""
+  Connect a CLIENT socket
+
+  ## Example
+
+  {:ok, socket} = Exzmq.client
+  Exzmq.connect(socket, "tcp://127.0.0.1:5555")
+  """
+  def connect(socket, address) do
+    socket |> GenServer.call({:connect, address |> Address.parse})
+  end
+
+
+
+  # private functions
+
+  def handle_call({:bind, address}, _from, state) do
+    opts = [:inet, :binary, active: false, ip: address.ip]
+    case :gen_tcp.listen(address.port, opts) do
+      {:ok, socket} -> {:reply, :ok, %{state | address: address, socket: socket}}
+      error -> {:reply, error, state}
     end
   end
+
+  def handle_call({:connect, address}, _from, state) do
+    opts = [:inet, :binary, active: false]
+    case :gen_tcp.connect(address.ip, address.port, opts) do
+      {:ok, socket} -> {:reply, :ok, %{state | address: address, socket: socket}}
+      error -> {:reply, error, state}
+    end
+  end
+
+
+  # OLD CODE 
+
+
+
+
+
+
+
+
+
+
+
 
   @doc ~S"""
   close ZMQ socket
@@ -290,6 +321,7 @@ defmodule Exzmq do
   @end
   """
   def handle_call({:bind, :tcp, port, opts}, _from, mqsstate = %Socket{identity: identity}) do
+    :gen_tcp.listen
     tcpopts0 = [
       :binary,
       :inet,

@@ -4,7 +4,10 @@
 
 defmodule Exzmq.Socket do
 
-  defstruct owner: nil,
+  defstruct socket: nil,
+            address: nil,
+            type: nil, # :client or :server
+            owner: nil,
             fsm: nil,
             identity: "",
             # delivery mechanism

@@ -3,7 +3,7 @@
 ## file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 defmodule Exzmq.Acceptor do
-	
+
   @moduledoc """
   This GenServer waits for incoming connections.
   Once a new connection is accepted, it is passed over to the parent SERVER socket.
@@ -12,13 +12,13 @@ defmodule Exzmq.Acceptor do
   use GenServer
 
   def init(state) do
-  	IO.puts "Acceptor started"
-  	GenServer.cast(self, :accept)
+    IO.puts "Acceptor started"
+    GenServer.cast(self, :accept)
     {:ok, state}
   end
 
   def handle_cast(:accept, state) do
-  	IO.puts "Waiting for connection: #{inspect state}"
+    IO.puts "Waiting for connection: #{inspect state}"
     case :gen_tcp.accept(state.socket) do
       {:ok, client} ->
         IO.puts "Accepted: #{inspect client}"
@@ -27,8 +27,8 @@ defmodule Exzmq.Acceptor do
       error ->
         IO.puts "Not accepted: #{inspect error}"
     end
-  	GenServer.cast(self, :accept)
-  	{:noreply, state}
+    GenServer.cast(self, :accept)
+    {:noreply, state}
   end
 
 end

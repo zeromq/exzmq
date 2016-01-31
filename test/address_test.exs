@@ -9,13 +9,13 @@ defmodule AddressTest do
   alias Exzmq.Address
 
   test "should pass struct unmodified" do
-  	address = %Address{transport: :tcp, ip: {127,0,0,1}, port: 5555}
-  	^address = address |> Address.parse
+    address = %Address{transport: :tcp, ip: {127,0,0,1}, port: 5555}
+    ^address = address |> Address.parse
   end
 
   test "should parse address string" do
-  	address = %Address{transport: :tcp, ip: {127,0,0,1}, port: 5555}
-  	^address = "tcp://127.0.0.1:5555" |> Address.parse
+    address = %Address{transport: :tcp, ip: {127,0,0,1}, port: 5555}
+    ^address = "tcp://127.0.0.1:5555" |> Address.parse
   end
 
 end

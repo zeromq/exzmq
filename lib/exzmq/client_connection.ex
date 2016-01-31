@@ -10,5 +10,5 @@ defmodule Exzmq.ClientConnection do
   """
 
   defstruct socket: nil 
- 	
+
 end

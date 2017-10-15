@@ -13,7 +13,7 @@ defmodule Exzmq.Acceptor do
 
   def init(state) do
     IO.puts "Acceptor started"
-    GenServer.cast(self, :accept)
+    GenServer.cast(self(), :accept)
     {:ok, state}
   end
 
@@ -27,7 +27,7 @@ defmodule Exzmq.Acceptor do
       error ->
         IO.puts "Not accepted: #{inspect error}"
     end
-    GenServer.cast(self, :accept)
+    GenServer.cast(self(), :accept)
     {:noreply, state}
   end
 

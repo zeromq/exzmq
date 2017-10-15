@@ -12,10 +12,10 @@ defmodule Exzmq.Command do
   encoded_metadata = metadata
   |> Map.put(:"Server-Type", type)
   |> encode_metadata
-  metadata_size = encoded_metadata |> byte_size
+  #metadata_size = encoded_metadata |> byte_size
   ready = [<<0xd5, "READY">>, encoded_metadata] |> IO.iodata_to_binary
   ready_size = ready |> byte_size
-  if(ready_size <= 255) do
+  if ready_size <= 255  do
     [<<0x04, ready_size::size(8)>>, ready] |> IO.iodata_to_binary
   else
     [<<0x06, ready_size::size(64)>>, ready] |> IO.iodata_to_binary
@@ -29,7 +29,7 @@ defmodule Exzmq.Command do
       ks = k |> Atom.to_string
       kl = ks |> String.length
       vl = v |> String.length
-      acc = acc ++ [kl,ks,<<vl::size(32)>>, v]
+      acc = acc ++ [kl, ks, <<vl::size(32)>>, v]
       {e, acc}
       end)
     |> elem(1)

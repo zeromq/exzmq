@@ -13,7 +13,7 @@ defmodule Exzmq.Mixfile do
       version: @version,
       elixir: ">= 1.1.0",
       name: "Exzmq",
-      package: package,
+      package: package(),
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       deps: [

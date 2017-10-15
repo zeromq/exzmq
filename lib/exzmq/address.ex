@@ -17,7 +17,7 @@ defmodule Exzmq.Address do
     [ip, port] = address
     |> String.slice(6, 999)
     |> String.split(":")
-    {:ok, ip} = ip |> String.to_char_list |> :inet.parse_address
+    {:ok, ip} = ip |> String.to_charlist |> :inet.parse_address
     %Exzmq.Address{ip: ip, port: port |> String.to_integer}
   end
 
